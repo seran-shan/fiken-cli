@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"strconv"
 
 	"github.com/jakoblind/fiken-cli/api"
 	"github.com/jakoblind/fiken-cli/output"
@@ -78,6 +79,49 @@ var inboxCmd = &cobra.Command{
 	},
 }
 
+var inboxGetCmd = &cobra.Command{
+	Use:   "get [id]",
+	Short: "Get an inbox document by ID",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid inbox document ID %q: %w", args[0], err)
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		var doc api.InboxDocument
+		_, err = client.Get(fmt.Sprintf(api.EndpointInboxDocument, slug, id), &doc)
+		if err != nil {
+			return fmt.Errorf("fetching inbox document: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(doc)
+		}
+
+		table := output.NewTable("FIELD", "VALUE")
+		table.AddRow("ID", fmt.Sprintf("%d", doc.DocumentId))
+		table.AddRow("Name", doc.Name)
+		table.AddRow("Description", doc.Description)
+		table.AddRow("Filename", doc.Filename)
+		table.AddRow("Status", doc.Status)
+		table.AddRow("Created Date", doc.CreatedDate.Format("2006-01-02"))
+		table.Print()
+
+		return nil
+	},
+}
+
 var inboxUploadCmd = &cobra.Command{
 	Use:   "upload",
 	Short: "Upload a document to the inbox",
@@ -130,6 +174,7 @@ func init() {
 	inboxUploadCmd.Flags().String("name", "", "Document name (defaults to filename)")
 	inboxUploadCmd.Flags().String("description", "", "Document description")
 
+	inboxCmd.AddCommand(inboxGetCmd)
 	inboxCmd.AddCommand(inboxUploadCmd)
 	rootCmd.AddCommand(inboxCmd)
 }
