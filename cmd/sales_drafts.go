@@ -378,13 +378,13 @@ var salesDraftsAttachmentsCmd = &cobra.Command{
 			output.PrintInfo("No attachments found.")
 			return nil
 		}
-		table := output.NewTable("ATTACHMENT ID", "FILENAME", "TYPE", "DATE")
+		table := output.NewTable("IDENTIFIER", "TYPE", "COMMENT", "DOWNLOAD URL")
 		for _, a := range attachments {
 			table.AddRow(
-				fmt.Sprintf("%d", a.AttachmentId),
-				a.Filename,
+				a.Identifier,
 				a.Type,
-				a.Date,
+				a.Comment,
+				a.DownloadUrl,
 			)
 		}
 		table.Print()
