@@ -78,7 +78,47 @@ var companiesDefaultCmd = &cobra.Command{
 	},
 }
 
+var companiesGetCmd = &cobra.Command{
+	Use:   "get [slug]",
+	Short: "Get a company by slug",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		var company api.Company
+		if _, err := client.Get(fmt.Sprintf(api.EndpointCompany, args[0]), &company); err != nil {
+			return fmt.Errorf("fetching company: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(company)
+		}
+
+		table := output.NewTable("FIELD", "VALUE")
+		table.AddRow("Name", company.Name)
+		table.AddRow("Slug", company.Slug)
+		table.AddRow("Org Number", company.OrganizationNumber)
+		table.AddRow("VAT Type", company.VatType)
+		table.AddRow("Email", company.Email)
+		table.AddRow("Phone", company.PhoneNumber)
+		table.AddRow("Creation Date", company.CreationDate)
+		table.AddRow("API Access", BoolToYesNo(company.HasApiAccess))
+		table.AddRow("Test Company", BoolToYesNo(company.TestCompany))
+		table.AddRow("Accounting Start Date", company.AccountingStartDate)
+		table.AddRow("Street", company.Address.StreetAddress)
+		table.AddRow("City", company.Address.City)
+		table.AddRow("Post Code", company.Address.PostCode)
+		table.AddRow("Country", company.Address.Country)
+		table.Print()
+		return nil
+	},
+}
+
 func init() {
 	companiesCmd.AddCommand(companiesDefaultCmd)
+	companiesCmd.AddCommand(companiesGetCmd)
 	rootCmd.AddCommand(companiesCmd)
 }

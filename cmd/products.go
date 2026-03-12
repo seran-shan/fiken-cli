@@ -286,6 +286,61 @@ var productsDeleteCmd = &cobra.Command{
 	},
 }
 
+var productsSalesReportCmd = &cobra.Command{
+	Use:   "sales-report",
+	Short: "Get product sales report",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		from, _ := cmd.Flags().GetString("from")
+		to, _ := cmd.Flags().GetString("to")
+
+		if from == "" {
+			return fmt.Errorf("missing required flag: --from")
+		}
+		if to == "" {
+			return fmt.Errorf("missing required flag: --to")
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		req := api.ProductSalesReportRequest{From: from, To: to}
+		var result api.ProductSalesReportResult
+		if err := client.Post(fmt.Sprintf(api.EndpointProductSalesReport, slug), req, &result); err != nil {
+			return fmt.Errorf("fetching sales report: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(result)
+		}
+
+		if len(result.Lines) == 0 {
+			output.PrintInfo("No sales data found for the given period.")
+			return nil
+		}
+
+		table := output.NewTable("PRODUCT ID", "PRODUCT NAME", "COUNT", "NET", "VAT", "GROSS")
+		for _, l := range result.Lines {
+			table.AddRow(
+				fmt.Sprintf("%d", l.ProductId),
+				l.ProductName,
+				fmt.Sprintf("%d", l.Count),
+				output.FormatAmount(l.Net),
+				output.FormatAmount(l.Vat),
+				output.FormatAmount(l.Gross),
+			)
+		}
+		table.Print()
+		return nil
+	},
+}
+
 func init() {
 	productsCreateCmd.Flags().String("name", "", "Product name (required)")
 	productsCreateCmd.Flags().String("income-account", "", "Income account code, e.g. 3000 (required)")
@@ -305,10 +360,14 @@ func init() {
 	productsUpdateCmd.Flags().Float64("stock", 0, "Stock quantity")
 	productsUpdateCmd.Flags().String("note", "", "Internal note")
 
+	productsSalesReportCmd.Flags().String("from", "", "Start date YYYY-MM-DD (required)")
+	productsSalesReportCmd.Flags().String("to", "", "End date YYYY-MM-DD (required)")
+
 	productsCmd.AddCommand(productsListCmd)
 	productsCmd.AddCommand(productsCreateCmd)
 	productsCmd.AddCommand(productsGetCmd)
 	productsCmd.AddCommand(productsUpdateCmd)
 	productsCmd.AddCommand(productsDeleteCmd)
+	productsCmd.AddCommand(productsSalesReportCmd)
 	rootCmd.AddCommand(productsCmd)
 }
