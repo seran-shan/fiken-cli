@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/jakoblind/fiken-cli/api"
@@ -244,6 +245,110 @@ var purchasesAttachCmd = &cobra.Command{
 	},
 }
 
+var purchasesGetCmd = &cobra.Command{
+	Use:   "get [id]",
+	Short: "Get a single purchase by ID",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid purchase ID %q: %w", args[0], err)
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		var purchase api.Purchase
+		_, err = client.Get(fmt.Sprintf(api.EndpointPurchase, slug, id), &purchase)
+		if err != nil {
+			return fmt.Errorf("fetching purchase: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(purchase)
+		}
+
+		var totalNet, totalVat, totalGross int64
+		for _, l := range purchase.Lines {
+			totalNet += l.NetAmount
+			totalVat += l.VatAmount
+			totalGross += l.GrossAmount
+		}
+
+		table := output.NewTable("FIELD", "VALUE")
+		table.AddRow("ID", fmt.Sprintf("%d", purchase.PurchaseId))
+		table.AddRow("Date", purchase.Date)
+		table.AddRow("Due Date", purchase.DueDate)
+		table.AddRow("Kind", purchase.Kind)
+		table.AddRow("Supplier", purchase.Supplier.Name)
+		table.AddRow("Currency", purchase.Currency)
+		table.AddRow("Paid", BoolToYesNo(purchase.Paid))
+		table.AddRow("Total Paid", output.FormatAmount(purchase.TotalPaid))
+		table.AddRow("Identifier", purchase.Identifier)
+		table.Print()
+
+		if len(purchase.Lines) > 0 {
+			fmt.Println()
+			lineTable := output.NewTable("DESCRIPTION", "ACCOUNT", "NET", "VAT", "GROSS", "VAT TYPE")
+			for _, l := range purchase.Lines {
+				lineTable.AddRow(
+					l.Description,
+					l.Account,
+					output.FormatAmount(l.NetAmount),
+					output.FormatAmount(l.VatAmount),
+					output.FormatAmount(l.GrossAmount),
+					l.VatType,
+				)
+			}
+			lineTable.Print()
+		}
+
+		return nil
+	},
+}
+
+var purchasesDeleteCmd = &cobra.Command{
+	Use:   "delete [id]",
+	Short: "Soft-delete a purchase",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid purchase ID %q: %w", args[0], err)
+		}
+
+		description, _ := cmd.Flags().GetString("description")
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		params := url.Values{}
+		params.Set("description", description)
+
+		err = client.PatchWithParams(fmt.Sprintf(api.EndpointPurchaseDelete, slug, id), params)
+		if err != nil {
+			return fmt.Errorf("deleting purchase: %w", err)
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Purchase %d deleted", id))
+		return nil
+	},
+}
+
 func init() {
 	purchasesAttachCmd.Flags().Int64("id", 0, "Purchase ID to attach to (required)")
 	purchasesAttachCmd.MarkFlagRequired("id")
@@ -252,8 +357,12 @@ func init() {
 	purchasesAttachCmd.Flags().Bool("attach-to-payment", true, "Whether this documents the payment")
 	purchasesAttachCmd.Flags().Bool("attach-to-sale", true, "Whether this documents the purchase itself")
 
+	purchasesDeleteCmd.Flags().String("description", "", "Deletion description (optional)")
+
 	purchasesCmd.AddCommand(purchasesListCmd)
 	purchasesCmd.AddCommand(purchasesCreateCmd)
+	purchasesCmd.AddCommand(purchasesGetCmd)
+	purchasesCmd.AddCommand(purchasesDeleteCmd)
 	purchasesCmd.AddCommand(purchasesAttachCmd)
 	rootCmd.AddCommand(purchasesCmd)
 
