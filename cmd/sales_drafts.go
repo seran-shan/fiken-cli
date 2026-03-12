@@ -349,6 +349,49 @@ var salesDraftsAttachCmd = &cobra.Command{
 	},
 }
 
+var salesDraftsAttachmentsCmd = &cobra.Command{
+	Use:   "attachments [id]",
+	Short: "List attachments for a sale draft",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid ID %q: %w", args[0], err)
+		}
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+		var attachments []api.Attachment
+		endpoint := fmt.Sprintf(api.EndpointSaleDraftAttachments, slug, id)
+		if _, err := client.Get(endpoint, &attachments); err != nil {
+			return fmt.Errorf("fetching attachments: %w", err)
+		}
+		if jsonOutput {
+			return output.PrintJSON(attachments)
+		}
+		if len(attachments) == 0 {
+			output.PrintInfo("No attachments found.")
+			return nil
+		}
+		table := output.NewTable("ATTACHMENT ID", "FILENAME", "TYPE", "DATE")
+		for _, a := range attachments {
+			table.AddRow(
+				fmt.Sprintf("%d", a.AttachmentId),
+				a.Filename,
+				a.Type,
+				a.Date,
+			)
+		}
+		table.Print()
+		return nil
+	},
+}
+
 var salesDraftsFinalizeCmd = &cobra.Command{
 	Use:   "finalize <id>",
 	Short: "Finalize a sale draft into a sale",
@@ -413,6 +456,7 @@ func init() {
 	salesDraftsCmd.AddCommand(salesDraftsDeleteCmd)
 	salesDraftsCmd.AddCommand(salesDraftsAttachCmd)
 	salesDraftsCmd.AddCommand(salesDraftsFinalizeCmd)
+	salesDraftsCmd.AddCommand(salesDraftsAttachmentsCmd)
 
 	salesCmd.AddCommand(salesDraftsCmd)
 }
