@@ -1,7 +1,13 @@
 package cmd
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/jakoblind/fiken-cli/api"
 	"github.com/jakoblind/fiken-cli/output"
@@ -99,6 +105,67 @@ Example:
 	},
 }
 
+var journalAttachCmd = &cobra.Command{
+	Use:   "attach",
+	Short: "Attach a document to a journal entry",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		entryID, _ := cmd.Flags().GetInt64("id")
+		filePath, _ := cmd.Flags().GetString("file")
+
+		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+			return fmt.Errorf("file not found: %s", filePath)
+		}
+
+		ext := strings.ToLower(filepath.Ext(filePath))
+		allowed := map[string]bool{".pdf": true, ".png": true, ".jpg": true, ".jpeg": true, ".gif": true}
+		if !allowed[ext] {
+			return fmt.Errorf("unsupported file extension %q: must be .pdf, .png, .jpg, .jpeg, or .gif", ext)
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		body := &bytes.Buffer{}
+		writer := multipart.NewWriter(body)
+
+		writer.WriteField("filename", filepath.Base(filePath))
+
+		f, err := os.Open(filePath)
+		if err != nil {
+			return fmt.Errorf("opening file: %w", err)
+		}
+		defer f.Close()
+
+		part, err := writer.CreateFormFile("file", filepath.Base(filePath))
+		if err != nil {
+			return fmt.Errorf("creating form file: %w", err)
+		}
+
+		if _, err := io.Copy(part, f); err != nil {
+			return fmt.Errorf("writing file to multipart: %w", err)
+		}
+
+		// CRITICAL: Close writer BEFORE reading body
+		writer.Close()
+
+		endpoint := fmt.Sprintf(api.EndpointJournalEntryAttachments, slug, entryID)
+		_, err = client.PostMultipart(endpoint, body, writer.FormDataContentType())
+		if err != nil {
+			return fmt.Errorf("attaching to journal entry: %w", err)
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Attachment added to journal entry %d", entryID))
+		return nil
+	},
+}
+
 func init() {
 	journalCreateCmd.Flags().String("date", "", "Entry date (yyyy-MM-dd)")
 	journalCreateCmd.Flags().String("description", "", "Journal entry description (max 200 chars)")
@@ -117,7 +184,13 @@ func init() {
 	_ = journalCreateCmd.MarkFlagRequired("credit-account")
 	_ = journalCreateCmd.MarkFlagRequired("credit-amount")
 
+	journalAttachCmd.Flags().Int64("id", 0, "Journal entry ID to attach to (required)")
+	journalAttachCmd.MarkFlagRequired("id")
+	journalAttachCmd.Flags().String("file", "", "Path to the file to attach (required)")
+	journalAttachCmd.MarkFlagRequired("file")
+
 	journalCmd.AddCommand(journalListCmd)
 	journalCmd.AddCommand(journalCreateCmd)
+	journalCmd.AddCommand(journalAttachCmd)
 	rootCmd.AddCommand(journalCmd)
 }

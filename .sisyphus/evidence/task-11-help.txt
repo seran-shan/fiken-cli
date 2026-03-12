@@ -1,0 +1,16 @@
+=== task-11: journal attach command ===
+Attach a document to a journal entry
+
+Usage:
+  fiken journal attach [flags]
+
+Flags:
+      --file string   Path to the file to attach (required)
+  -h, --help          help for attach
+      --id int        Journal entry ID to attach to (required)
+
+Global Flags:
+      --company string           Company slug (auto-detected if only one)
+      --json                     Output as JSON
+      --keyring-backend string   Keyring backend: auto, secret-service, keychain, wincred, pass, file (default "auto")
+      --no-input                 Non-interactive mode
