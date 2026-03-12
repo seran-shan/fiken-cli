@@ -1,13 +1,8 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"mime/multipart"
-	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/jakoblind/fiken-cli/api"
 	"github.com/jakoblind/fiken-cli/output"
@@ -37,14 +32,8 @@ var salesAttachCmd = &cobra.Command{
 		attachToPayment, _ := cmd.Flags().GetBool("attach-to-payment")
 		attachToSale, _ := cmd.Flags().GetBool("attach-to-sale")
 
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			return fmt.Errorf("file not found: %s", filePath)
-		}
-
-		ext := strings.ToLower(filepath.Ext(filePath))
-		allowed := map[string]bool{".pdf": true, ".png": true, ".jpg": true, ".jpeg": true, ".gif": true}
-		if !allowed[ext] {
-			return fmt.Errorf("unsupported file extension %q: must be .pdf, .png, .jpg, .jpeg, or .gif", ext)
+		if err := ValidateFile(filePath); err != nil {
+			return err
 		}
 
 		client, err := getClient()
@@ -57,34 +46,13 @@ var salesAttachCmd = &cobra.Command{
 			return err
 		}
 
-		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
-
-		writer.WriteField("filename", filepath.Base(filePath))
-		writer.WriteField("attachToPayment", fmt.Sprintf("%v", attachToPayment))
-		writer.WriteField("attachToSale", fmt.Sprintf("%v", attachToSale))
-
-		f, err := os.Open(filePath)
-		if err != nil {
-			return fmt.Errorf("opening file: %w", err)
+		fields := map[string]string{
+			"filename":        filepath.Base(filePath),
+			"attachToPayment": fmt.Sprintf("%v", attachToPayment),
+			"attachToSale":    fmt.Sprintf("%v", attachToSale),
 		}
-		defer f.Close()
-
-		part, err := writer.CreateFormFile("file", filepath.Base(filePath))
-		if err != nil {
-			return fmt.Errorf("creating form file: %w", err)
-		}
-
-		if _, err := io.Copy(part, f); err != nil {
-			return fmt.Errorf("writing file to multipart: %w", err)
-		}
-
-		// CRITICAL: Close writer BEFORE reading body
-		writer.Close()
-
 		endpoint := fmt.Sprintf(api.EndpointSaleAttachments, slug, saleID)
-		_, err = client.PostMultipart(endpoint, body, writer.FormDataContentType())
-		if err != nil {
+		if err := UploadAttachment(client, endpoint, filePath, fields); err != nil {
 			return fmt.Errorf("attaching to sale: %w", err)
 		}
 
