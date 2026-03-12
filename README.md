@@ -6,9 +6,11 @@ A command-line client for the [Fiken.no](https://fiken.no) accounting API. Manag
 
 - 🏢 List and manage companies
 - 📊 Chart of accounts and balances
-- 🛒 Create and manage purchases with receipt attachments
-- 💰 Create and manage sales with document attachments
-- 📄 Create invoices and attach supporting documents
+- 🛒 Create and manage purchases, attachments, and purchase payments
+- 👥 Full contact management (list, create, get, update, delete)
+- 📦 Full product management (list, create, get, update, delete)
+- 💰 Create and manage sales, sale drafts, attachments, settlements, and sale payments
+- 📄 Create and manage invoices, invoice drafts, and attachments
 - 📒 Create general journal entries with attachments
 - 🔄 View transactions (auto-generated from purchases/sales/journal entries)
 - 📥 EHF inbox management and document upload
@@ -130,20 +132,70 @@ fiken purchases create \    # Create purchase with receipt attached
   --vat-type HIGH \
   --file receipt.pdf
 fiken purchases attach --id 123 --file receipt.pdf  # Attach receipt to existing purchase
+fiken purchases payments list 123                   # List payments for a purchase
+fiken purchases payments create 123 --date 2025-01-15 --account 1920 --amount 1500.00
+fiken purchases payments get 123 456               # Get a specific purchase payment
+```
+
+### Contacts
+
+```bash
+fiken contacts list
+fiken contacts create --name "Acme AS" --customer --email post@acme.no
+fiken contacts get 123
+fiken contacts update 123 --phone "+47 999 99 999"
+fiken contacts delete 123
+```
+
+### Products
+
+```bash
+fiken products list
+fiken products create --name "Consulting" --income-account 3000 --vat-type HIGH --unit-price 1250.00
+fiken products get 123
+fiken products update 123 --note "Updated product note"
+fiken products delete 123
 ```
 
 ### Sales
 
 ```bash
 fiken sales list            # List sales
+fiken sales create --date 2025-01-15 --kind cash_sale --description "Consulting" \
+  --account 3000 --amount 1250.00 --vat-type HIGH
+fiken sales get 123
+fiken sales delete 123 --description "Created by mistake"
+fiken sales settle 123 --settled-date 2025-01-31
 fiken sales attach --id 123 --file document.pdf  # Attach document to existing sale
+fiken sales drafts list
+fiken sales drafts create --cash=false --description "Consulting" --account 3000 --amount 1250.00 --vat-type HIGH
+fiken sales drafts get 123
+fiken sales drafts update 123 --amount 1500.00
+fiken sales drafts delete 123
+fiken sales drafts attach 123 --file document.pdf
+fiken sales drafts finalize 123
+fiken sales payments list 123
+fiken sales payments create 123 --date 2025-01-15 --account 1920 --amount 1250.00
+fiken sales payments get 123 456
 ```
 
 ### Invoices
 
 ```bash
 fiken invoices list         # List invoices
+fiken invoices create --issue-date 2025-01-15 --due-date 2025-01-29 --customer-id 123 \
+  --bank-account-code 1920:12345 --description "Consulting" --unit-price 1250.00 --quantity 1 --vat-type HIGH
+fiken invoices get 123
+fiken invoices update 123 --new-due-date 2025-02-05
 fiken invoices attach --id 123 --file document.pdf  # Attach document to existing invoice
+fiken invoices drafts list
+fiken invoices drafts create --type invoice --customer-id 123 --days-until-due 14 \
+  --description "Consulting" --quantity 1 --unit-price 1250.00 --vat-type HIGH
+fiken invoices drafts get 123
+fiken invoices drafts update 123 --quantity 2
+fiken invoices drafts delete 123
+fiken invoices drafts attach 123 --file document.pdf
+fiken invoices drafts finalize 123
 ```
 
 ### Journal Entries
