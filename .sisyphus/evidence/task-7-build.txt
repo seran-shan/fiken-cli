@@ -1,0 +1,11 @@
+== Task 7: Transaction list and get commands ==
+Date: 2026-03-12
+
+== go build ./... ==
+Exit 0 (no output = success)
+
+== go vet ./... ==
+Exit 0 (no output = success)
+
+== grep -n 'Not yet implemented' cmd/transactions.go ==
+Exit 1 (no matches found = stub removed)

@@ -1,0 +1,17 @@
+Error: file not found: nonexistent.pdf
+Usage:
+  fiken inbox upload [flags]
+
+Flags:
+      --description string   Document description
+      --file string          Path to the file to upload (required)
+  -h, --help                 help for upload
+      --name string          Document name (defaults to filename)
+
+Global Flags:
+      --company string           Company slug (auto-detected if only one)
+      --json                     Output as JSON
+      --keyring-backend string   Keyring backend: auto, secret-service, keychain, wincred, pass, file (default "auto")
+      --no-input                 Non-interactive mode
+
+exit status 1

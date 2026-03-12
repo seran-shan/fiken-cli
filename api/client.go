@@ -1,11 +1,13 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"sync"
 	"time"
@@ -71,7 +73,7 @@ func (c *Client) doRequest(req *http.Request) (*http.Response, error) {
 
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Accept", "application/json")
-	if req.Method == http.MethodPost || req.Method == http.MethodPut {
+	if (req.Method == http.MethodPost || req.Method == http.MethodPut) && req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
@@ -166,6 +168,53 @@ func (c *Client) Post(path string, body interface{}, result interface{}) error {
 	return nil
 }
 
+// PostCreate performs a POST request with JSON body and returns the Location header URL.
+// Used for creating entities that return 201 Created with a Location header.
+func (c *Client) PostCreate(path string, reqBody interface{}) (string, error) {
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", fmt.Errorf("encoding request: %w", err)
+	}
+
+	u := c.baseURL + path
+	req, err := http.NewRequest(http.MethodPost, u, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return "", fmt.Errorf("creating request: %w", err)
+	}
+
+	resp, err := c.doRequest(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	// Drain body to allow connection reuse
+	io.Copy(io.Discard, resp.Body)
+
+	location := resp.Header.Get("Location")
+	return location, nil
+}
+
+// PostMultipart performs a POST request with multipart/form-data body and returns the Location header URL.
+// The contentType parameter must include the multipart boundary (from multipart.Writer.FormDataContentType()).
+func (c *Client) PostMultipart(path string, body io.Reader, contentType string) (string, error) {
+	u := c.baseURL + path
+	req, err := http.NewRequest(http.MethodPost, u, body)
+	if err != nil {
+		return "", fmt.Errorf("creating request: %w", err)
+	}
+	req.Header.Set("Content-Type", contentType)
+
+	resp, err := c.doRequest(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	location := resp.Header.Get("Location")
+	return location, nil
+}
+
 // GetAllPages fetches all pages for a paginated endpoint.
 // The fetchPage function should perform the actual request and return results + whether there are more pages.
 func (c *Client) GetAllPages(path string, pageSize int, fetchPage func(page int) (int, error)) error {
@@ -205,6 +254,17 @@ func parsePagination(resp *http.Response) *PaginationInfo {
 		info.ResultCount, _ = strconv.Atoi(v)
 	}
 	return info
+}
+
+// ParseIDFromLocation extracts the numeric entity ID from a Fiken Location URL.
+// Example: "https://api.fiken.no/api/v2/companies/my-co/purchases/12345" → 12345
+func ParseIDFromLocation(locationURL string) (int64, error) {
+	base := path.Base(locationURL)
+	id, err := strconv.ParseInt(base, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf("parsing ID from location %q: %w", locationURL, err)
+	}
+	return id, nil
 }
 
 func truncate(s string, maxLen int) string {

@@ -1,0 +1,17 @@
+Attach a receipt/document to a sale
+
+Usage:
+  fiken sales attach [flags]
+
+Flags:
+      --attach-to-payment   Whether this documents the payment (default true)
+      --attach-to-sale      Whether this documents the sale itself (default true)
+      --file string         Path to the file to attach (required)
+  -h, --help                help for attach
+      --id int              Sale ID to attach to (required)
+
+Global Flags:
+      --company string           Company slug (auto-detected if only one)
+      --json                     Output as JSON
+      --keyring-backend string   Keyring backend: auto, secret-service, keychain, wincred, pass, file (default "auto")
+      --no-input                 Non-interactive mode
