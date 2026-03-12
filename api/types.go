@@ -603,3 +603,186 @@ type UserInfo struct {
 	Name  string `json:"name"`
 	Email string `json:"email"`
 }
+
+// --- Invoiceish draft types (shared for offer/order-confirmation/invoice drafts) ---
+
+type InvoiceishDraftRequest struct {
+	Type             string                    `json:"type"`
+	InvoiceIssueDate string                    `json:"invoiceIssueDate,omitempty"`
+	InvoiceNumber    string                    `json:"invoiceNumber,omitempty"`
+	CustomerId       int64                     `json:"customerId,omitempty"`
+	ContactPersonId  int64                     `json:"contactPersonId,omitempty"`
+	Days             int64                     `json:"days,omitempty"`
+	Hours            float64                   `json:"hours,omitempty"`
+	Currency         string                    `json:"currency,omitempty"`
+	BankAccountCode  string                    `json:"bankAccountCode,omitempty"`
+	YourReference    string                    `json:"yourReference,omitempty"`
+	OurReference     string                    `json:"ourReference,omitempty"`
+	OrderReference   string                    `json:"orderReference,omitempty"`
+	ProjectId        int64                     `json:"projectId,omitempty"`
+	Lines            []InvoiceDraftLineRequest `json:"lines,omitempty"`
+}
+
+type InvoiceishDraftResult struct {
+	DraftId          int64                     `json:"draftId"`
+	Uuid             string                    `json:"uuid,omitempty"`
+	Type             string                    `json:"type"`
+	InvoiceIssueDate string                    `json:"invoiceIssueDate,omitempty"`
+	InvoiceNumber    string                    `json:"invoiceNumber,omitempty"`
+	CustomerId       int64                     `json:"customerId,omitempty"`
+	ContactPersonId  int64                     `json:"contactPersonId,omitempty"`
+	Days             int64                     `json:"days,omitempty"`
+	Hours            float64                   `json:"hours,omitempty"`
+	Currency         string                    `json:"currency,omitempty"`
+	BankAccountCode  string                    `json:"bankAccountCode,omitempty"`
+	YourReference    string                    `json:"yourReference,omitempty"`
+	OurReference     string                    `json:"ourReference,omitempty"`
+	OrderReference   string                    `json:"orderReference,omitempty"`
+	ProjectId        int64                     `json:"projectId,omitempty"`
+	Lines            []InvoiceDraftLineRequest `json:"lines,omitempty"`
+	Net              int64                     `json:"net,omitempty"`
+	Vat              int64                     `json:"vat,omitempty"`
+	Gross            int64                     `json:"gross,omitempty"`
+	LastModifiedDate string                    `json:"lastModifiedDate,omitempty"`
+}
+
+type InvoiceishDraftsResponse struct {
+	PaginatedResponse
+	Drafts []InvoiceishDraftResult `json:"drafts"`
+}
+
+// --- Credit note types ---
+
+type CreditNote struct {
+	CreditNoteId        int64       `json:"creditNoteId"`
+	CreditNoteNumber    int64       `json:"creditNoteNumber,omitempty"`
+	Kid                 string      `json:"kid,omitempty"`
+	Customer            Contact     `json:"customer,omitempty"`
+	Net                 int64       `json:"net"`
+	Vat                 int64       `json:"vat"`
+	Gross               int64       `json:"gross"`
+	NetInNok            int64       `json:"netInNok"`
+	VatInNok            int64       `json:"vatInNok"`
+	GrossInNok          int64       `json:"grossInNok"`
+	CreditNoteText      string      `json:"creditNoteText,omitempty"`
+	YourReference       string      `json:"yourReference,omitempty"`
+	OurReference        string      `json:"ourReference,omitempty"`
+	OrderReference      string      `json:"orderReference,omitempty"`
+	Address             Address     `json:"address,omitempty"`
+	Lines               []OrderLine `json:"lines,omitempty"`
+	Currency            string      `json:"currency"`
+	IssueDate           string      `json:"issueDate"`
+	Settled             bool        `json:"settled"`
+	AssociatedInvoiceId int64       `json:"associatedInvoiceId,omitempty"`
+}
+
+type CreditNotesResponse struct {
+	PaginatedResponse
+	CreditNotes []CreditNote `json:"creditNotes"`
+}
+
+type FullCreditNoteRequest struct {
+	IssueDate      string `json:"issueDate"`
+	InvoiceId      int64  `json:"invoiceId"`
+	CreditNoteText string `json:"creditNoteText,omitempty"`
+}
+
+type PartialCreditNoteRequest struct {
+	IssueDate       string                  `json:"issueDate"`
+	InvoiceId       int64                   `json:"invoiceId,omitempty"`
+	ContactId       int64                   `json:"contactId,omitempty"`
+	ContactPersonId int64                   `json:"contactPersonId,omitempty"`
+	CreditNoteText  string                  `json:"creditNoteText,omitempty"`
+	OurReference    string                  `json:"ourReference,omitempty"`
+	YourReference   string                  `json:"yourReference,omitempty"`
+	OrderReference  string                  `json:"orderReference,omitempty"`
+	ProjectId       int64                   `json:"projectId,omitempty"`
+	Currency        string                  `json:"currency,omitempty"`
+	Lines           []CreditNoteLineRequest `json:"lines"`
+}
+
+type CreditNoteLineRequest struct {
+	Description string `json:"description"`
+	Account     string `json:"account"`
+	VatCode     string `json:"vatCode"`
+	Amount      int64  `json:"amount"`
+	Quantity    int64  `json:"quantity,omitempty"`
+	Comment     string `json:"comment,omitempty"`
+}
+
+type SendCreditNoteRequest struct {
+	CreditNoteId               int64    `json:"creditNoteId"`
+	Method                     []string `json:"method,omitempty"`
+	IncludeDocumentAttachments bool     `json:"includeDocumentAttachments,omitempty"`
+	RecipientName              string   `json:"recipientName,omitempty"`
+	RecipientEmail             string   `json:"recipientEmail,omitempty"`
+	Message                    string   `json:"message,omitempty"`
+	EmailSendOption            string   `json:"emailSendOption,omitempty"`
+	OrganizationNumber         string   `json:"organizationNumber,omitempty"`
+	MobileNumber               string   `json:"mobileNumber,omitempty"`
+}
+
+// --- Offer types ---
+
+type Offer struct {
+	OfferId     int64       `json:"offerId"`
+	OfferNumber int64       `json:"offerNumber,omitempty"`
+	Date        string      `json:"date,omitempty"`
+	Net         int64       `json:"net"`
+	Vat         int64       `json:"vat"`
+	Gross       int64       `json:"gross"`
+	Customer    Contact     `json:"customer,omitempty"`
+	Lines       []OrderLine `json:"lines,omitempty"`
+	Currency    string      `json:"currency,omitempty"`
+}
+
+type OffersResponse struct {
+	PaginatedResponse
+	Offers []Offer `json:"offers"`
+}
+
+// --- Order confirmation types ---
+
+type OrderConfirmation struct {
+	ConfirmationId int64       `json:"confirmationId"`
+	Date           string      `json:"date,omitempty"`
+	Net            int64       `json:"net"`
+	Vat            int64       `json:"vat"`
+	Gross          int64       `json:"gross"`
+	Customer       Contact     `json:"customer,omitempty"`
+	Lines          []OrderLine `json:"lines,omitempty"`
+	Currency       string      `json:"currency,omitempty"`
+}
+
+type OrderConfirmationsResponse struct {
+	PaginatedResponse
+	OrderConfirmations []OrderConfirmation `json:"orderConfirmations"`
+}
+
+// --- Project types ---
+
+type Project struct {
+	ProjectId   int64   `json:"projectId"`
+	Number      string  `json:"number,omitempty"`
+	Name        string  `json:"name"`
+	Description string  `json:"description,omitempty"`
+	StartDate   string  `json:"startDate,omitempty"`
+	EndDate     string  `json:"endDate,omitempty"`
+	Contact     Contact `json:"contact,omitempty"`
+	Completed   bool    `json:"completed"`
+}
+
+type ProjectsResponse struct {
+	PaginatedResponse
+	Projects []Project `json:"projects"`
+}
+
+type ProjectRequest struct {
+	Number      string `json:"number,omitempty"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	StartDate   string `json:"startDate,omitempty"`
+	EndDate     string `json:"endDate,omitempty"`
+	ContactId   int64  `json:"contactId,omitempty"`
+	Completed   bool   `json:"completed"`
+}

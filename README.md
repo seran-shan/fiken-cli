@@ -11,6 +11,10 @@ A command-line client for the [Fiken.no](https://fiken.no) accounting API. Manag
 - 📦 Full product management (list, create, get, update, delete)
 - 💰 Create and manage sales, sale drafts, attachments, settlements, and sale payments
 - 📄 Create and manage invoices, invoice drafts, and attachments
+- 📝 Credit notes: full/partial creation, sending, and drafts lifecycle
+- 📋 Offers with drafts lifecycle
+- ✅ Order confirmations with drafts lifecycle
+- 📁 Project management (CRUD)
 - 📒 Journal entries with listing, get, and attachments
 - 🔄 View and delete transactions
 - 📥 EHF inbox management and document upload
@@ -228,6 +232,81 @@ fiken invoices drafts update 123 --quantity 2
 fiken invoices drafts delete 123
 fiken invoices drafts attach 123 --file document.pdf
 fiken invoices drafts finalize 123
+```
+
+### Credit Notes
+
+```bash
+fiken credit-notes list                # List credit notes
+fiken credit-notes list --issue-date 2025-01-15  # Filter by issue date
+fiken credit-notes list --settled=true            # Filter by settled status
+fiken credit-notes list --customer-id 123         # Filter by customer
+fiken credit-notes get 123             # Get a specific credit note
+fiken credit-notes create-full \       # Create a full credit note from an invoice
+  --issue-date 2025-01-15 \
+  --invoice-id 456 \
+  --credit-note-text "Full credit"
+fiken credit-notes create-partial \    # Create a partial credit note
+  --issue-date 2025-01-15 \
+  --description "Partial refund" \
+  --account 3000 \
+  --vat-code HIGH \
+  --amount 500.00
+fiken credit-notes send --credit-note-id 123 --method auto
+fiken credit-notes send --credit-note-id 123 --method email --recipient-email client@example.com
+
+# Credit Note Drafts
+fiken credit-notes drafts list
+fiken credit-notes drafts create --description "Refund" --quantity 1 --unit-price 500.00 --vat-type HIGH
+fiken credit-notes drafts get 123
+fiken credit-notes drafts update 123 --unit-price 600.00
+fiken credit-notes drafts delete 123
+fiken credit-notes drafts attach 123 --file document.pdf
+fiken credit-notes drafts finalize 123
+```
+
+### Offers
+
+```bash
+fiken offers list              # List offers
+fiken offers get 123           # Get a specific offer
+
+# Offer Drafts
+fiken offers drafts list
+fiken offers drafts create --description "Consulting" --quantity 1 --unit-price 1250.00 --vat-type HIGH
+fiken offers drafts get 123
+fiken offers drafts update 123 --unit-price 1500.00
+fiken offers drafts delete 123
+fiken offers drafts attach 123 --file proposal.pdf
+fiken offers drafts finalize 123
+```
+
+### Order Confirmations
+
+```bash
+fiken order-confirmations list         # List order confirmations
+fiken order-confirmations get 123      # Get a specific order confirmation
+
+# Order Confirmation Drafts
+fiken order-confirmations drafts list
+fiken order-confirmations drafts create --customer-id 123 --description "Web project" \
+  --quantity 1 --unit-price 25000.00 --vat-type HIGH
+fiken order-confirmations drafts get 123
+fiken order-confirmations drafts update 123 --quantity 2
+fiken order-confirmations drafts delete 123
+fiken order-confirmations drafts attach 123 --file contract.pdf
+fiken order-confirmations drafts finalize 123
+```
+
+### Projects
+
+```bash
+fiken projects list                    # List projects
+fiken projects list --completed=true   # Filter by completed status
+fiken projects create --name "Website Redesign" --start-date 2025-01-01 --contact-id 123
+fiken projects get 456                 # Get a specific project
+fiken projects update 456 --end-date 2025-06-30 --completed=true
+fiken projects delete 456
 ```
 
 ### Journal Entries

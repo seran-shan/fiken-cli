@@ -102,6 +102,37 @@ const (
 	// Account/Balance endpoints (additions)
 	EndpointAccountBalance = "/companies/%s/accountBalances/%s"
 	EndpointAccount        = "/companies/%s/accounts/%s"
+
+	// Credit note endpoints
+	EndpointCreditNotes                = "/companies/%s/creditNotes"
+	EndpointCreditNote                 = "/companies/%s/creditNotes/%d"
+	EndpointCreditNotesFull            = "/companies/%s/creditNotes/full"
+	EndpointCreditNotesPartial         = "/companies/%s/creditNotes/partial"
+	EndpointCreditNotesSend            = "/companies/%s/creditNotes/send"
+	EndpointCreditNoteDrafts           = "/companies/%s/creditNotes/drafts"
+	EndpointCreditNoteDraft            = "/companies/%s/creditNotes/drafts/%d"
+	EndpointCreditNoteDraftAttachments = "/companies/%s/creditNotes/drafts/%d/attachments"
+	EndpointCreditNoteDraftFinalize    = "/companies/%s/creditNotes/drafts/%d/createCreditNote"
+
+	// Offer endpoints
+	EndpointOffers                 = "/companies/%s/offers"
+	EndpointOffer                  = "/companies/%s/offers/%d"
+	EndpointOfferDrafts            = "/companies/%s/offers/drafts"
+	EndpointOfferDraft             = "/companies/%s/offers/drafts/%d"
+	EndpointOfferDraftAttachments  = "/companies/%s/offers/drafts/%d/attachments"
+	EndpointOfferDraftFinalize     = "/companies/%s/offers/drafts/%d/createOffer"
+
+	// Order confirmation endpoints
+	EndpointOrderConfirmations                = "/companies/%s/orderConfirmations"
+	EndpointOrderConfirmation                 = "/companies/%s/orderConfirmations/%d"
+	EndpointOrderConfirmationDrafts           = "/companies/%s/orderConfirmations/drafts"
+	EndpointOrderConfirmationDraft            = "/companies/%s/orderConfirmations/drafts/%d"
+	EndpointOrderConfirmationDraftAttachments = "/companies/%s/orderConfirmations/drafts/%d/attachments"
+	EndpointOrderConfirmationDraftFinalize    = "/companies/%s/orderConfirmations/drafts/%d/createOrderConfirmation"
+
+	// Project endpoints
+	EndpointProjects = "/companies/%s/projects"
+	EndpointProject  = "/companies/%s/projects/%d"
 )
 
 // Pagination defaults
