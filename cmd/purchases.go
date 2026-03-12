@@ -1,14 +1,9 @@
 package cmd
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"mime/multipart"
 	"net/url"
-	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/jakoblind/fiken-cli/api"
@@ -73,10 +68,7 @@ var purchasesListCmd = &cobra.Command{
 
 		table := output.NewTable("ID", "DATE", "KIND", "PAID", "AMOUNT", "IDENTIFIER")
 		for _, p := range purchases {
-			paid := "No"
-			if p.Paid {
-				paid = "Yes"
-			}
+			paid := BoolToYesNo(p.Paid)
 			// Sum net amounts from lines
 			var totalNet int64
 			for _, l := range p.Lines {
@@ -145,17 +137,12 @@ var purchasesCreateCmd = &cobra.Command{
 		}
 
 		if filePath != "" {
-			if _, err := os.Stat(filePath); os.IsNotExist(err) {
-				return fmt.Errorf("file not found: %s", filePath)
-			}
-			ext := strings.ToLower(filepath.Ext(filePath))
-			allowed := map[string]bool{".pdf": true, ".png": true, ".jpg": true, ".jpeg": true, ".gif": true}
-			if !allowed[ext] {
-				return fmt.Errorf("unsupported file extension %q: must be .pdf, .png, .jpg, .jpeg, or .gif", ext)
+			if err := ValidateFile(filePath); err != nil {
+				return err
 			}
 		}
 
-		amountCents, err := parseAmountToCents(amountStr)
+		amountCents, err := ParseAmountToCents(amountStr)
 		if err != nil {
 			return err
 		}
@@ -202,40 +189,16 @@ var purchasesCreateCmd = &cobra.Command{
 		output.PrintSuccess(fmt.Sprintf("Purchase created (ID: %d)", id))
 
 		if filePath != "" {
-			body := &bytes.Buffer{}
-			writer := multipart.NewWriter(body)
-
-			writer.WriteField("filename", filepath.Base(filePath))
-			writer.WriteField("attachToPayment", "true")
-			writer.WriteField("attachToSale", "true")
-
-			f, err := os.Open(filePath)
-			if err != nil {
-				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
-				return nil
+			fields := map[string]string{
+				"filename":        filepath.Base(filePath),
+				"attachToPayment": "true",
+				"attachToSale":    "true",
 			}
-			defer f.Close()
-
-			part, err := writer.CreateFormFile("file", filepath.Base(filePath))
-			if err != nil {
-				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
-				return nil
-			}
-
-			if _, err := io.Copy(part, f); err != nil {
-				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
-				return nil
-			}
-
-			writer.Close()
-
 			endpoint := fmt.Sprintf(api.EndpointPurchaseAttachments, slug, id)
-			_, attachErr := client.PostMultipart(endpoint, body, writer.FormDataContentType())
-			if attachErr != nil {
+			if attachErr := UploadAttachment(client, endpoint, filePath, fields); attachErr != nil {
 				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, attachErr, id, filePath))
 				return nil
 			}
-
 			output.PrintSuccess(fmt.Sprintf("Receipt attached to purchase %d", id))
 		}
 
@@ -252,14 +215,8 @@ var purchasesAttachCmd = &cobra.Command{
 		attachToPayment, _ := cmd.Flags().GetBool("attach-to-payment")
 		attachToSale, _ := cmd.Flags().GetBool("attach-to-sale")
 
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			return fmt.Errorf("file not found: %s", filePath)
-		}
-
-		ext := strings.ToLower(filepath.Ext(filePath))
-		allowed := map[string]bool{".pdf": true, ".png": true, ".jpg": true, ".jpeg": true, ".gif": true}
-		if !allowed[ext] {
-			return fmt.Errorf("unsupported file extension %q: must be .pdf, .png, .jpg, .jpeg, or .gif", ext)
+		if err := ValidateFile(filePath); err != nil {
+			return err
 		}
 
 		client, err := getClient()
@@ -272,64 +229,19 @@ var purchasesAttachCmd = &cobra.Command{
 			return err
 		}
 
-		body := &bytes.Buffer{}
-		writer := multipart.NewWriter(body)
-
-		writer.WriteField("filename", filepath.Base(filePath))
-		writer.WriteField("attachToPayment", fmt.Sprintf("%v", attachToPayment))
-		writer.WriteField("attachToSale", fmt.Sprintf("%v", attachToSale))
-
-		f, err := os.Open(filePath)
-		if err != nil {
-			return fmt.Errorf("opening file: %w", err)
+		fields := map[string]string{
+			"filename":        filepath.Base(filePath),
+			"attachToPayment": fmt.Sprintf("%v", attachToPayment),
+			"attachToSale":    fmt.Sprintf("%v", attachToSale),
 		}
-		defer f.Close()
-
-		part, err := writer.CreateFormFile("file", filepath.Base(filePath))
-		if err != nil {
-			return fmt.Errorf("creating form file: %w", err)
-		}
-
-		if _, err := io.Copy(part, f); err != nil {
-			return fmt.Errorf("writing file to multipart: %w", err)
-		}
-
-		// CRITICAL: Close writer BEFORE reading body
-		writer.Close()
-
 		endpoint := fmt.Sprintf(api.EndpointPurchaseAttachments, slug, purchaseID)
-		_, err = client.PostMultipart(endpoint, body, writer.FormDataContentType())
-		if err != nil {
+		if err := UploadAttachment(client, endpoint, filePath, fields); err != nil {
 			return fmt.Errorf("attaching to purchase: %w", err)
 		}
 
 		output.PrintSuccess(fmt.Sprintf("Attachment added to purchase %d", purchaseID))
 		return nil
 	},
-}
-
-// parseAmountToCents converts a decimal string like "1000.50" to int64 cents (100050).
-// Uses integer arithmetic only to avoid float64 precision issues.
-func parseAmountToCents(s string) (int64, error) {
-	s = strings.TrimSpace(s)
-	parts := strings.SplitN(s, ".", 2)
-	whole, err := strconv.ParseInt(parts[0], 10, 64)
-	if err != nil || whole < 0 {
-		return 0, fmt.Errorf("invalid amount %q: must be a non-negative number like 100.00", s)
-	}
-	cents := whole * 100
-	if len(parts) == 2 {
-		dec := parts[1]
-		switch len(dec) {
-		case 1:
-			d, _ := strconv.ParseInt(dec, 10, 64)
-			cents += d * 10
-		default:
-			d, _ := strconv.ParseInt(dec[:2], 10, 64)
-			cents += d
-		}
-	}
-	return cents, nil
 }
 
 func init() {
