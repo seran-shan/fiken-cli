@@ -92,6 +92,41 @@ var transactionsListCmd = &cobra.Command{
 	},
 }
 
+var transactionsDeleteCmd = &cobra.Command{
+	Use:   "delete [id]",
+	Short: "Soft-delete a transaction",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid transaction ID %q: %w", args[0], err)
+		}
+
+		description, _ := cmd.Flags().GetString("description")
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		params := url.Values{}
+		params.Set("description", description)
+
+		err = client.PatchWithParams(fmt.Sprintf(api.EndpointTransactionDelete, slug, id), params)
+		if err != nil {
+			return fmt.Errorf("deleting transaction: %w", err)
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Transaction %d deleted", id))
+		return nil
+	},
+}
+
 var transactionsGetCmd = &cobra.Command{
 	Use:   "get",
 	Short: "Get a single transaction by ID",
@@ -147,7 +182,10 @@ func init() {
 	transactionsListCmd.Flags().String("created-date", "", "Filter by created date (YYYY-MM-DD)")
 	transactionsListCmd.Flags().String("last-modified", "", "Filter by last modified date (YYYY-MM-DD)")
 
+	transactionsDeleteCmd.Flags().String("description", "", "Deletion description (optional)")
+
 	transactionsCmd.AddCommand(transactionsListCmd)
 	transactionsCmd.AddCommand(transactionsGetCmd)
+	transactionsCmd.AddCommand(transactionsDeleteCmd)
 	rootCmd.AddCommand(transactionsCmd)
 }

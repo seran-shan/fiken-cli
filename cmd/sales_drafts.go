@@ -224,7 +224,6 @@ var salesDraftsUpdateCmd = &cobra.Command{
 			return fmt.Errorf("fetching draft for update: %w", err)
 		}
 
-		// Start from existing values
 		var existingLine api.DraftLineRequest
 		if len(existing.Lines) > 0 {
 			existingLine = existing.Lines[0]
@@ -386,7 +385,6 @@ var salesDraftsFinalizeCmd = &cobra.Command{
 }
 
 func init() {
-	// Create flags
 	salesDraftsCreateCmd.Flags().Bool("cash", false, "Whether this is a cash sale draft")
 	salesDraftsCreateCmd.Flags().String("description", "", "Line description (required)")
 	salesDraftsCreateCmd.Flags().String("account", "", "Revenue account code (required)")
@@ -396,7 +394,6 @@ func init() {
 	salesDraftsCreateCmd.Flags().Bool("paid", false, "Whether the draft is paid")
 	salesDraftsCreateCmd.Flags().String("currency", "NOK", "Currency code")
 
-	// Update flags (same as create)
 	salesDraftsUpdateCmd.Flags().Bool("cash", false, "Whether this is a cash sale draft")
 	salesDraftsUpdateCmd.Flags().String("description", "", "Line description")
 	salesDraftsUpdateCmd.Flags().String("account", "", "Revenue account code")
@@ -406,11 +403,9 @@ func init() {
 	salesDraftsUpdateCmd.Flags().Bool("paid", false, "Whether the draft is paid")
 	salesDraftsUpdateCmd.Flags().String("currency", "", "Currency code")
 
-	// Attach flags
 	salesDraftsAttachCmd.Flags().String("file", "", "Path to the file to attach (required)")
 	salesDraftsAttachCmd.MarkFlagRequired("file")
 
-	// Register subcommands on salesDraftsCmd
 	salesDraftsCmd.AddCommand(salesDraftsListCmd)
 	salesDraftsCmd.AddCommand(salesDraftsCreateCmd)
 	salesDraftsCmd.AddCommand(salesDraftsGetCmd)
@@ -419,6 +414,5 @@ func init() {
 	salesDraftsCmd.AddCommand(salesDraftsAttachCmd)
 	salesDraftsCmd.AddCommand(salesDraftsFinalizeCmd)
 
-	// Register drafts on salesCmd
 	salesCmd.AddCommand(salesDraftsCmd)
 }

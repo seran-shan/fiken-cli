@@ -1,0 +1,83 @@
+---
+description: "React/TypeScript conventions for the web frontend. Enforces Tailwind, shadcn/ui, React Query, and project-specific patterns."
+globs: "apps/web/src/**/*.{ts,tsx}"
+alwaysApply: false
+---
+
+# Frontend Conventions (apps/web/)
+
+## Stack
+- React 18 + TypeScript 5.5 + Vite (SWC)
+- Styling: Tailwind CSS v4 + shadcn/ui (Radix UI)
+- State: React Query (TanStack Query v5) for server state, React Context for global state
+- Forms: react-hook-form + Zod validation
+- Auth: Auth0 via Supabase third-party auth
+- Charts: D3.js + Recharts
+- Animations: Framer Motion
+- Icons: Lucide React
+
+## Key Conventions
+
+### Imports
+- ALWAYS use `@/` path alias (resolves to `src/`). Never relative imports.
+- Use barrel exports from `index.ts` files for shared modules.
+- Example: `import { useDebounce } from "@/hooks/shared"`
+
+### Components
+- Functional components with hooks only (no class components)
+- Use shadcn/ui primitives from `@/components/ui/` for all standard UI elements
+- PascalCase file names (e.g., `HelpDrawer.tsx`, `FinancialTableCell.tsx`)
+- Props typed as interfaces: `interface ComponentNameProps { ... }`
+- Follow pattern in `apps/web/src/components/ui/button.tsx` for CVA variants
+
+### Styling
+- Tailwind utility classes via `cn()` from `@/lib/utils` for conditional classes
+- No CSS modules, no styled-components, no inline styles
+- Custom theme variables defined in `src/index.css` (CSS custom properties)
+- Use `tailwindcss-animate` plugin classes for animations
+
+### State Management
+- Server state: React Query `useQuery()` / `useMutation()` — never raw fetch
+- Global state: React Context API (auth, module contexts)
+- Local state: `useState` for UI state only
+- Follow pattern in `apps/web/src/contexts/auth/AuthContext.tsx`
+
+### Data Fetching
+- Supabase client from `@/integrations/supabase/client`
+- Service classes with static methods (e.g., `InputDataService.loadInputs()`)
+- Error handling: try-catch with toast notifications (sonner)
+- Follow pattern in `apps/web/src/services/InputDataService.ts`
+
+### Forms
+- react-hook-form with shadcn/ui Form wrapper components
+- Zod schemas for validation
+- Follow pattern in `apps/web/src/components/ui/form.tsx`
+
+### Routing
+- React Router v6 with nested routes
+- Protected routes via `ProtectedRoute` wrapper component
+- Programmatic navigation via `useNavigate()` hook
+
+### Naming
+- Components/Types: PascalCase
+- Hooks: camelCase with `use` prefix
+- Utils/services: camelCase
+- Directories: kebab-case for feature folders (e.g., `return-distribution/`)
+- Types: `interface` for object shapes, `type` for unions and aliases
+
+### File Organization
+- `components/ui/` — shadcn/ui primitives
+- `components/shared/` — Cross-module components
+- `components/{module}/` — Feature-specific components
+- `hooks/{module}/` — Feature-specific hooks
+- `contexts/{module}/` — Feature-specific contexts
+- `services/` — API service classes
+- `types/` — TypeScript type definitions
+
+## Anti-Patterns
+- Do NOT use relative imports — always `@/` alias
+- Do NOT use Redux, Zustand, or MobX — use React Query + Context
+- Do NOT use MUI, Ant Design, or Chakra — use shadcn/ui + Radix
+- Do NOT use CSS modules or styled-components — use Tailwind
+- Do NOT use `any` type — prefer proper typing
+- Do NOT add new UI dependencies without checking shadcn/ui first

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
+	"time"
 
 	"github.com/jakoblind/fiken-cli/api"
 	"github.com/jakoblind/fiken-cli/output"
@@ -25,8 +27,15 @@ var balancesCmd = &cobra.Command{
 
 		endpoint := fmt.Sprintf(api.EndpointAccountBalances, slug)
 
+		params := url.Values{}
+		dateStr, _ := cmd.Flags().GetString("date")
+		if dateStr == "" {
+			dateStr = time.Now().Format("2006-01-02")
+		}
+		params.Set("date", dateStr)
+
 		var balances []api.AccountBalance
-		_, err = client.Get(endpoint, &balances)
+		_, err = client.GetWithParams(endpoint, params, &balances)
 		if err != nil {
 			return fmt.Errorf("fetching balances: %w", err)
 		}
@@ -50,6 +59,45 @@ var balancesCmd = &cobra.Command{
 	},
 }
 
+var balancesGetCmd = &cobra.Command{
+	Use:   "get [account-code]",
+	Short: "Get balance for a specific account",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		endpoint := fmt.Sprintf(api.EndpointAccountBalance, slug, args[0])
+
+		var balance api.AccountBalance
+		_, err = client.Get(endpoint, &balance)
+		if err != nil {
+			return fmt.Errorf("fetching balance: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(balance)
+		}
+
+		table := output.NewTable("FIELD", "VALUE")
+		table.AddRow("Account Code", balance.Account.Code)
+		table.AddRow("Account Name", balance.Account.Name)
+		table.AddRow("Balance", output.FormatAmount(balance.Balance))
+		table.Print()
+
+		return nil
+	},
+}
+
 func init() {
+	balancesCmd.Flags().String("date", "", "Balance date (YYYY-MM-DD, default: today)")
+	balancesCmd.AddCommand(balancesGetCmd)
 	rootCmd.AddCommand(balancesCmd)
 }

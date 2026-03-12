@@ -77,8 +77,46 @@ var accountsCmd = &cobra.Command{
 	},
 }
 
+var accountsGetCmd = &cobra.Command{
+	Use:   "get [account-code]",
+	Short: "Get a specific account",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		endpoint := fmt.Sprintf(api.EndpointAccount, slug, args[0])
+
+		var account api.Account
+		_, err = client.Get(endpoint, &account)
+		if err != nil {
+			return fmt.Errorf("fetching account: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(account)
+		}
+
+		table := output.NewTable("FIELD", "VALUE")
+		table.AddRow("Code", account.Code)
+		table.AddRow("Name", account.Name)
+		table.AddRow("Description", account.Description)
+		table.Print()
+
+		return nil
+	},
+}
+
 func init() {
 	accountsCmd.Flags().StringVar(&accountsFromCode, "from", "", "Filter from account code")
 	accountsCmd.Flags().StringVar(&accountsToCode, "to", "", "Filter to account code")
+	accountsCmd.AddCommand(accountsGetCmd)
 	rootCmd.AddCommand(accountsCmd)
 }
