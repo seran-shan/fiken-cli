@@ -256,9 +256,9 @@ func parsePagination(resp *http.Response) *PaginationInfo {
 	return info
 }
 
-// parseIDFromLocation extracts the numeric entity ID from a Fiken Location URL.
+// ParseIDFromLocation extracts the numeric entity ID from a Fiken Location URL.
 // Example: "https://api.fiken.no/api/v2/companies/my-co/purchases/12345" → 12345
-func parseIDFromLocation(locationURL string) (int64, error) {
+func ParseIDFromLocation(locationURL string) (int64, error) {
 	base := path.Base(locationURL)
 	id, err := strconv.ParseInt(base, 10, 64)
 	if err != nil {
