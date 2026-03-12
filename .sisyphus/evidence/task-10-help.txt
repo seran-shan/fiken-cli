@@ -1,0 +1,15 @@
+Attach a document to an invoice
+
+Usage:
+  fiken invoices attach [flags]
+
+Flags:
+      --file string   Path to the file to attach (required)
+  -h, --help          help for attach
+      --id int        Invoice ID to attach to (required)
+
+Global Flags:
+      --company string           Company slug (auto-detected if only one)
+      --json                     Output as JSON
+      --keyring-backend string   Keyring backend: auto, secret-service, keychain, wincred, pass, file (default "auto")
+      --no-input                 Non-interactive mode
