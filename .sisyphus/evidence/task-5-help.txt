@@ -1,0 +1,26 @@
+Create a new purchase/expense with a single order line.
+
+Usage:
+  fiken purchases create [flags]
+
+Flags:
+      --account string           Expense account code (required)
+      --amount string            Amount in decimal format e.g. '1000.00' (required)
+      --currency string          Currency code (default "NOK")
+      --date string              Purchase date (YYYY-MM-DD, required)
+      --description string       Line description (required)
+      --file string              Path to receipt file to attach after creation (optional)
+  -h, --help                     help for create
+      --identifier string        External identifier (optional)
+      --kind string              Purchase kind: 'cash_purchase' or 'supplier' (required)
+      --paid                     Whether the purchase is paid
+      --payment-account string   Payment account code (optional)
+      --payment-date string      Payment date YYYY-MM-DD (optional)
+      --supplier-id int          Supplier contact ID (optional)
+      --vat-type string          VAT type e.g. 'HIGH', 'NONE', 'MEDIUM' (required)
+
+Global Flags:
+      --company string           Company slug (auto-detected if only one)
+      --json                     Output as JSON
+      --keyring-backend string   Keyring backend: auto, secret-service, keychain, wincred, pass, file (default "auto")
+      --no-input                 Non-interactive mode
