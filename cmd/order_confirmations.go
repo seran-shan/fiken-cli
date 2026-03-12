@@ -139,7 +139,7 @@ var orderConfirmationsCounterCmd = &cobra.Command{
 		if jsonOutput {
 			return output.PrintJSON(counter)
 		}
-		fmt.Printf("Order confirmation counter: %d\n", counter.Counter)
+		fmt.Printf("Order confirmation counter: %d\n", counter.Value)
 		return nil
 	},
 }
@@ -157,7 +157,7 @@ var orderConfirmationsCounterSetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		req := api.OrderConfirmationCounter{Counter: value}
+		req := api.OrderConfirmationCounter{Value: int32(value)}
 		if err := client.Post(fmt.Sprintf(api.EndpointOrderConfirmationCounter, slug), req, nil); err != nil {
 			return fmt.Errorf("setting order confirmation counter: %w", err)
 		}

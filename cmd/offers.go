@@ -142,7 +142,7 @@ var offersCounterCmd = &cobra.Command{
 		if jsonOutput {
 			return output.PrintJSON(counter)
 		}
-		fmt.Printf("Offer counter: %d\n", counter.Counter)
+		fmt.Printf("Offer counter: %d\n", counter.Value)
 		return nil
 	},
 }
@@ -160,7 +160,7 @@ var offersCounterSetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		req := api.OfferCounter{Counter: value}
+		req := api.OfferCounter{Value: int32(value)}
 		if err := client.Post(fmt.Sprintf(api.EndpointOfferCounter, slug), req, nil); err != nil {
 			return fmt.Errorf("setting offer counter: %w", err)
 		}
