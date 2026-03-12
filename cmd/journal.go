@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"net/url"
 	"path/filepath"
+	"strconv"
 
 	"github.com/jakoblind/fiken-cli/api"
 	"github.com/jakoblind/fiken-cli/output"
@@ -18,7 +20,152 @@ var journalListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List journal entries",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("Not yet implemented.")
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		var params url.Values
+		if date, _ := cmd.Flags().GetString("date"); date != "" {
+			params = url.Values{}
+			params.Set("date", date)
+		}
+
+		endpoint := fmt.Sprintf(api.EndpointJournalEntries, slug)
+		entries, err := FetchAllPages[api.JournalEntry](client, endpoint, params, 25, 4)
+		if err != nil {
+			return fmt.Errorf("fetching journal entries: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(entries)
+		}
+
+		if len(entries) == 0 {
+			output.PrintInfo("No journal entries found.")
+			return nil
+		}
+
+		table := output.NewTable("ID", "DATE", "DESCRIPTION")
+		for _, e := range entries {
+			table.AddRow(
+				fmt.Sprintf("%d", e.JournalEntryId),
+				e.Date,
+				e.Description,
+			)
+		}
+		table.Print()
+
+		fmt.Printf("\n%d journal entries\n", len(entries))
+		return nil
+	},
+}
+
+var journalGetCmd = &cobra.Command{
+	Use:   "get [id]",
+	Short: "Get a journal entry by ID",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid journal entry ID %q: %w", args[0], err)
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		var entry api.JournalEntry
+		_, err = client.Get(fmt.Sprintf(api.EndpointJournalEntry, slug, id), &entry)
+		if err != nil {
+			return fmt.Errorf("fetching journal entry: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(entry)
+		}
+
+		table := output.NewTable("FIELD", "VALUE")
+		table.AddRow("ID", fmt.Sprintf("%d", entry.JournalEntryId))
+		table.AddRow("Date", entry.Date)
+		table.AddRow("Description", entry.Description)
+		table.Print()
+
+		if len(entry.Lines) > 0 {
+			fmt.Println()
+			lineTable := output.NewTable("ACCOUNT", "DEBIT", "CREDIT")
+			for _, l := range entry.Lines {
+				lineTable.AddRow(
+					l.Account,
+					output.FormatAmount(l.DebitAmount),
+					output.FormatAmount(l.CreditAmount),
+				)
+			}
+			lineTable.Print()
+		}
+
+		return nil
+	},
+}
+
+var journalAttachmentsCmd = &cobra.Command{
+	Use:   "attachments [id]",
+	Short: "List attachments for a journal entry",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid journal entry ID %q: %w", args[0], err)
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		var attachments []api.Attachment
+		endpoint := fmt.Sprintf(api.EndpointJournalEntryAttachments, slug, id)
+		_, err = client.Get(endpoint, &attachments)
+		if err != nil {
+			return fmt.Errorf("fetching attachments: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(attachments)
+		}
+
+		if len(attachments) == 0 {
+			output.PrintInfo("No attachments found.")
+			return nil
+		}
+
+		table := output.NewTable("ATTACHMENT ID", "FILENAME", "TYPE", "DATE")
+		for _, a := range attachments {
+			table.AddRow(
+				fmt.Sprintf("%d", a.AttachmentId),
+				a.Filename,
+				a.Type,
+				a.Date,
+			)
+		}
+		table.Print()
+
 		return nil
 	},
 }
@@ -157,8 +304,12 @@ func init() {
 	journalAttachCmd.Flags().String("file", "", "Path to the file to attach (required)")
 	journalAttachCmd.MarkFlagRequired("file")
 
+	journalListCmd.Flags().String("date", "", "Filter by date (YYYY-MM-DD)")
+
 	journalCmd.AddCommand(journalListCmd)
 	journalCmd.AddCommand(journalCreateCmd)
+	journalCmd.AddCommand(journalGetCmd)
 	journalCmd.AddCommand(journalAttachCmd)
+	journalCmd.AddCommand(journalAttachmentsCmd)
 	rootCmd.AddCommand(journalCmd)
 }
