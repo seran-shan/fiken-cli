@@ -298,24 +298,22 @@ func (c *Client) PatchWithParams(path string, params url.Values) error {
 	return nil
 }
 
-// Delete performs a DELETE request and returns an error if the request fails.
-// Expects 200 or 204 as success.
-func (c *Client) Delete(path string) error {
+func (c *Client) Delete(path string) (int, error) {
 	u := c.baseURL + path
 	req, err := http.NewRequest(http.MethodDelete, u, nil)
 	if err != nil {
-		return fmt.Errorf("creating request: %w", err)
+		return 0, fmt.Errorf("creating request: %w", err)
 	}
 
 	resp, err := c.doRequest(req)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer resp.Body.Close()
 	// Drain body to allow connection reuse
 	io.Copy(io.Discard, resp.Body)
 
-	return nil
+	return resp.StatusCode, nil
 }
 
 // PostEmpty performs a POST request with no body and returns the Location header URL.

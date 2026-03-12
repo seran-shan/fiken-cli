@@ -277,7 +277,7 @@ var productsDeleteCmd = &cobra.Command{
 		}
 
 		endpoint := fmt.Sprintf(api.EndpointProduct, slug, id)
-		if err := client.Delete(endpoint); err != nil {
+		if _, err := client.Delete(endpoint); err != nil {
 			return fmt.Errorf("deleting product: %w", err)
 		}
 

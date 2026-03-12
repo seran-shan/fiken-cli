@@ -329,7 +329,7 @@ var invoicesDraftsDeleteCmd = &cobra.Command{
 		}
 
 		endpoint := fmt.Sprintf(api.EndpointInvoiceDraft, slug, id)
-		if err := client.Delete(endpoint); err != nil {
+		if _, err := client.Delete(endpoint); err != nil {
 			return fmt.Errorf("deleting invoice draft: %w", err)
 		}
 

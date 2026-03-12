@@ -235,6 +235,18 @@ var contactsUpdateCmd = &cobra.Command{
 		if cmd.Flags().Changed("member-number") {
 			req.MemberNumber, _ = cmd.Flags().GetInt64("member-number")
 		}
+		if cmd.Flags().Changed("street") {
+			req.Address.StreetAddress, _ = cmd.Flags().GetString("street")
+		}
+		if cmd.Flags().Changed("city") {
+			req.Address.City, _ = cmd.Flags().GetString("city")
+		}
+		if cmd.Flags().Changed("postcode") {
+			req.Address.PostCode, _ = cmd.Flags().GetString("postcode")
+		}
+		if cmd.Flags().Changed("country") {
+			req.Address.Country, _ = cmd.Flags().GetString("country")
+		}
 
 		_, err = client.Put(endpoint, req)
 		if err != nil {
@@ -267,11 +279,17 @@ var contactsDeleteCmd = &cobra.Command{
 		}
 
 		endpoint := fmt.Sprintf(api.EndpointContact, slug, id)
-		if err := client.Delete(endpoint); err != nil {
+		statusCode, err := client.Delete(endpoint)
+		if err != nil {
 			return fmt.Errorf("deleting contact: %w", err)
 		}
 
-		output.PrintSuccess(fmt.Sprintf("Contact %d deleted (or deactivated if it had associated transactions)", id))
+		if statusCode == 204 {
+			output.PrintSuccess(fmt.Sprintf("Contact %d deleted", id))
+			return nil
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Contact %d deactivated (has associated transactions)", id))
 		return nil
 	},
 }
@@ -298,6 +316,10 @@ func init() {
 	contactsUpdateCmd.Flags().Bool("supplier", false, "Mark as supplier")
 	contactsUpdateCmd.Flags().String("language", "", "Language code")
 	contactsUpdateCmd.Flags().Int64("member-number", 0, "Member number")
+	contactsUpdateCmd.Flags().String("street", "", "Street address")
+	contactsUpdateCmd.Flags().String("city", "", "City")
+	contactsUpdateCmd.Flags().String("postcode", "", "Post code")
+	contactsUpdateCmd.Flags().String("country", "", "Country code (e.g. 'NOR')")
 
 	contactsCmd.AddCommand(contactsListCmd)
 	contactsCmd.AddCommand(contactsCreateCmd)
