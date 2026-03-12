@@ -43,12 +43,12 @@ var offersListCmd = &cobra.Command{
 			return nil
 		}
 
-		table := output.NewTable("ID", "OFFER NUMBER", "ISSUE DATE", "CUSTOMER", "NET", "VAT", "GROSS", "CURRENCY")
+		table := output.NewTable("ID", "OFFER NUMBER", "DATE", "CUSTOMER", "NET", "VAT", "GROSS", "CURRENCY")
 		for _, o := range offers {
 			table.AddRow(
 				fmt.Sprintf("%d", o.OfferId),
 				fmt.Sprintf("%d", o.OfferNumber),
-				o.IssueDate,
+				o.Date,
 				o.Customer.Name,
 				output.FormatAmount(o.Net),
 				output.FormatAmount(o.Vat),
@@ -95,7 +95,7 @@ var offersGetCmd = &cobra.Command{
 		table := output.NewTable("FIELD", "VALUE")
 		table.AddRow("ID", fmt.Sprintf("%d", offer.OfferId))
 		table.AddRow("Offer Number", fmt.Sprintf("%d", offer.OfferNumber))
-		table.AddRow("Issue Date", offer.IssueDate)
+		table.AddRow("Date", offer.Date)
 		table.AddRow("Customer", offer.Customer.Name)
 		table.AddRow("Net", output.FormatAmount(offer.Net))
 		table.AddRow("VAT", output.FormatAmount(offer.Vat))

@@ -134,7 +134,7 @@ var orderConfirmationsDraftsCreateCmd = &cobra.Command{
 		}
 
 		req := api.InvoiceishDraftRequest{
-			Type:             "orderConfirmation",
+			Type:             "order_confirmation",
 			CustomerId:       customerID,
 			ContactPersonId:  contactPersonID,
 			Days:             days,

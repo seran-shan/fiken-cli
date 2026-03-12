@@ -43,11 +43,11 @@ var orderConfirmationsListCmd = &cobra.Command{
 			return nil
 		}
 
-		table := output.NewTable("ID", "ISSUE DATE", "CUSTOMER", "NET", "VAT", "GROSS", "CURRENCY")
+		table := output.NewTable("ID", "DATE", "CUSTOMER", "NET", "VAT", "GROSS", "CURRENCY")
 		for _, c := range confirmations {
 			table.AddRow(
 				fmt.Sprintf("%d", c.ConfirmationId),
-				c.IssueDate,
+				c.Date,
 				c.Customer.Name,
 				output.FormatAmount(c.Net),
 				output.FormatAmount(c.Vat),
@@ -93,7 +93,7 @@ var orderConfirmationsGetCmd = &cobra.Command{
 
 		table := output.NewTable("FIELD", "VALUE")
 		table.AddRow("ID", fmt.Sprintf("%d", confirmation.ConfirmationId))
-		table.AddRow("Issue Date", confirmation.IssueDate)
+		table.AddRow("Date", confirmation.Date)
 		table.AddRow("Customer", confirmation.Customer.Name)
 		table.AddRow("Net", output.FormatAmount(confirmation.Net))
 		table.AddRow("VAT", output.FormatAmount(confirmation.Vat))

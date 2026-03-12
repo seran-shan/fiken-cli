@@ -727,7 +727,7 @@ type SendCreditNoteRequest struct {
 type Offer struct {
 	OfferId     int64       `json:"offerId"`
 	OfferNumber int64       `json:"offerNumber,omitempty"`
-	IssueDate   string      `json:"issueDate,omitempty"`
+	Date        string      `json:"date,omitempty"`
 	Net         int64       `json:"net"`
 	Vat         int64       `json:"vat"`
 	Gross       int64       `json:"gross"`
@@ -745,7 +745,7 @@ type OffersResponse struct {
 
 type OrderConfirmation struct {
 	ConfirmationId int64       `json:"confirmationId"`
-	IssueDate      string      `json:"issueDate,omitempty"`
+	Date           string      `json:"date,omitempty"`
 	Net            int64       `json:"net"`
 	Vat            int64       `json:"vat"`
 	Gross          int64       `json:"gross"`

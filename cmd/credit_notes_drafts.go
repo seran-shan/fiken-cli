@@ -132,7 +132,7 @@ var creditNotesDraftsCreateCmd = &cobra.Command{
 		}
 
 		req := api.InvoiceishDraftRequest{
-			Type:             "creditNote",
+			Type:             "credit_note",
 			CustomerId:       customerID,
 			ContactPersonId:  contactPersonID,
 			Days:             days,
