@@ -73,7 +73,7 @@ func (c *Client) doRequest(req *http.Request) (*http.Response, error) {
 
 	req.Header.Set("Authorization", "Bearer "+c.token)
 	req.Header.Set("Accept", "application/json")
-	if (req.Method == http.MethodPost || req.Method == http.MethodPut) && req.Header.Get("Content-Type") == "" {
+	if (req.Method == http.MethodPost || req.Method == http.MethodPut || req.Method == http.MethodPatch) && req.Header.Get("Content-Type") == "" {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
@@ -209,6 +209,130 @@ func (c *Client) PostMultipart(path string, body io.Reader, contentType string) 
 		return "", err
 	}
 	defer resp.Body.Close()
+	io.Copy(io.Discard, resp.Body)
+
+	location := resp.Header.Get("Location")
+	return location, nil
+}
+
+// Put performs a PUT request with JSON body and returns the Location header URL.
+// Used for full-replace updates (contacts, products, drafts).
+func (c *Client) Put(path string, reqBody interface{}) (string, error) {
+	bodyBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return "", fmt.Errorf("encoding request: %w", err)
+	}
+
+	u := c.baseURL + path
+	req, err := http.NewRequest(http.MethodPut, u, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return "", fmt.Errorf("creating request: %w", err)
+	}
+
+	resp, err := c.doRequest(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	// Drain body to allow connection reuse
+	io.Copy(io.Discard, resp.Body)
+
+	location := resp.Header.Get("Location")
+	return location, nil
+}
+
+// Patch performs a PATCH request with JSON body and decodes the response.
+// Used for invoice updates (PATCH with JSON body).
+func (c *Client) Patch(path string, body interface{}, result interface{}) error {
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		return fmt.Errorf("encoding request: %w", err)
+	}
+
+	u := c.baseURL + path
+	req, err := http.NewRequest(http.MethodPatch, u, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+
+	resp, err := c.doRequest(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if result != nil {
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("reading response: %w", err)
+		}
+		if err := json.Unmarshal(respBody, result); err != nil {
+			return fmt.Errorf("decoding response: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// PatchWithParams performs a PATCH request with query parameters and no JSON body.
+// Used for soft-delete and settle operations.
+func (c *Client) PatchWithParams(path string, params url.Values) error {
+	u := c.baseURL + path
+	if params != nil {
+		u += "?" + params.Encode()
+	}
+
+	req, err := http.NewRequest(http.MethodPatch, u, nil)
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+
+	resp, err := c.doRequest(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	// Drain body to allow connection reuse
+	io.Copy(io.Discard, resp.Body)
+
+	return nil
+}
+
+// Delete performs a DELETE request and returns an error if the request fails.
+// Expects 200 or 204 as success.
+func (c *Client) Delete(path string) error {
+	u := c.baseURL + path
+	req, err := http.NewRequest(http.MethodDelete, u, nil)
+	if err != nil {
+		return fmt.Errorf("creating request: %w", err)
+	}
+
+	resp, err := c.doRequest(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	// Drain body to allow connection reuse
+	io.Copy(io.Discard, resp.Body)
+
+	return nil
+}
+
+// PostEmpty performs a POST request with no body and returns the Location header URL.
+// Used for draft finalization (e.g., POST /invoices/drafts/{id}/createInvoice).
+func (c *Client) PostEmpty(path string) (string, error) {
+	u := c.baseURL + path
+	req, err := http.NewRequest(http.MethodPost, u, nil)
+	if err != nil {
+		return "", fmt.Errorf("creating request: %w", err)
+	}
+
+	resp, err := c.doRequest(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	// Drain body to allow connection reuse
 	io.Copy(io.Discard, resp.Body)
 
 	location := resp.Header.Get("Location")
