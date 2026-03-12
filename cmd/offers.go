@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/jakoblind/fiken-cli/api"
 	"github.com/jakoblind/fiken-cli/output"
@@ -122,8 +123,110 @@ var offersGetCmd = &cobra.Command{
 	},
 }
 
+var offersCounterCmd = &cobra.Command{
+	Use:   "counter",
+	Short: "Get or set the offer counter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+		var counter api.OfferCounter
+		if _, err := client.Get(fmt.Sprintf(api.EndpointOfferCounter, slug), &counter); err != nil {
+			return fmt.Errorf("fetching offer counter: %w", err)
+		}
+		if jsonOutput {
+			return output.PrintJSON(counter)
+		}
+		fmt.Printf("Offer counter: %d\n", counter.Counter)
+		return nil
+	},
+}
+
+var offersCounterSetCmd = &cobra.Command{
+	Use:   "set",
+	Short: "Set the offer counter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		value, _ := cmd.Flags().GetInt64("value")
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+		req := api.OfferCounter{Counter: value}
+		if err := client.Post(fmt.Sprintf(api.EndpointOfferCounter, slug), req, nil); err != nil {
+			return fmt.Errorf("setting offer counter: %w", err)
+		}
+		output.PrintSuccess(fmt.Sprintf("Offer counter set to %d", value))
+		return nil
+	},
+}
+
+var offersSendCmd = &cobra.Command{
+	Use:   "send",
+	Short: "Send an offer",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		offerID, _ := cmd.Flags().GetInt64("offer-id")
+		if offerID == 0 {
+			return fmt.Errorf("missing required flag: --offer-id")
+		}
+		methodStr, _ := cmd.Flags().GetString("method")
+		recipientName, _ := cmd.Flags().GetString("recipient-name")
+		recipientEmail, _ := cmd.Flags().GetString("recipient-email")
+		message, _ := cmd.Flags().GetString("message")
+		includeAttachments, _ := cmd.Flags().GetBool("include-document-attachments")
+
+		methods := strings.Split(methodStr, ",")
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		req := api.SendOfferRequest{
+			OfferId:                    offerID,
+			Method:                     methods,
+			RecipientName:              recipientName,
+			RecipientEmail:             recipientEmail,
+			Message:                    message,
+			IncludeDocumentAttachments: includeAttachments,
+		}
+
+		if err := client.Post(fmt.Sprintf(api.EndpointOfferSend, slug), req, nil); err != nil {
+			return fmt.Errorf("sending offer: %w", err)
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Offer %d sent", offerID))
+		return nil
+	},
+}
+
 func init() {
+	offersCounterSetCmd.Flags().Int64("value", 0, "Counter value to set (required)")
+	offersCounterSetCmd.MarkFlagRequired("value")
+
+	offersSendCmd.Flags().Int64("offer-id", 0, "Offer ID to send (required)")
+	offersSendCmd.Flags().String("method", "auto", "Delivery method (comma-separated: auto,email,ehf,efaktura,vipps,sms,letter)")
+	offersSendCmd.Flags().String("recipient-name", "", "Recipient name (optional)")
+	offersSendCmd.Flags().String("recipient-email", "", "Recipient email (optional)")
+	offersSendCmd.Flags().String("message", "", "Message to include (optional)")
+	offersSendCmd.Flags().Bool("include-document-attachments", false, "Include document attachments")
+
 	offersCmd.AddCommand(offersListCmd)
 	offersCmd.AddCommand(offersGetCmd)
+	offersCmd.AddCommand(offersCounterCmd)
+	offersCounterCmd.AddCommand(offersCounterSetCmd)
+	offersCmd.AddCommand(offersSendCmd)
 	rootCmd.AddCommand(offersCmd)
 }
