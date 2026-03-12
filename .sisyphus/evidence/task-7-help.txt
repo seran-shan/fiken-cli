@@ -1,0 +1,34 @@
+== Task 7: Transaction commands help output ==
+Date: 2026-03-12
+
+== fiken transactions list --help ==
+List financial transactions for the selected company with optional date filters.
+
+Usage:
+  fiken transactions list [flags]
+
+Flags:
+      --created-date string    Filter by created date (YYYY-MM-DD)
+  -h, --help                   help for list
+      --last-modified string   Filter by last modified date (YYYY-MM-DD)
+
+Global Flags:
+      --company string           Company slug (auto-detected if only one)
+      --json                     Output as JSON
+      --keyring-backend string   Keyring backend: auto, secret-service, keychain, wincred, pass, file (default "auto")
+      --no-input                 Non-interactive mode
+
+== fiken transactions get --help ==
+Get a single transaction by ID
+
+Usage:
+  fiken transactions get [flags]
+
+Flags:
+  -h, --help   help for get
+
+Global Flags:
+      --company string           Company slug (auto-detected if only one)
+      --json                     Output as JSON
+      --keyring-backend string   Keyring backend: auto, secret-service, keychain, wincred, pass, file (default "auto")
+      --no-input                 Non-interactive mode
