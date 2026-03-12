@@ -251,6 +251,153 @@ var invoicesUpdateCmd = &cobra.Command{
 	},
 }
 
+var invoicesSendCmd = &cobra.Command{
+	Use:   "send",
+	Short: "Send an invoice",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		invoiceID, _ := cmd.Flags().GetInt64("invoice-id")
+		if invoiceID == 0 {
+			return fmt.Errorf("missing required flag: --invoice-id")
+		}
+		methodStr, _ := cmd.Flags().GetString("method")
+		recipientName, _ := cmd.Flags().GetString("recipient-name")
+		recipientEmail, _ := cmd.Flags().GetString("recipient-email")
+		message, _ := cmd.Flags().GetString("message")
+		includeAttachments, _ := cmd.Flags().GetBool("include-document-attachments")
+
+		methods := strings.Split(methodStr, ",")
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		req := api.SendInvoiceRequest{
+			InvoiceId:                  invoiceID,
+			Method:                     methods,
+			RecipientName:              recipientName,
+			RecipientEmail:             recipientEmail,
+			Message:                    message,
+			IncludeDocumentAttachments: includeAttachments,
+		}
+
+		if err := client.Post(fmt.Sprintf(api.EndpointInvoiceSend, slug), req, nil); err != nil {
+			return fmt.Errorf("sending invoice: %w", err)
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Invoice %d sent", invoiceID))
+		return nil
+	},
+}
+
+var invoicesCounterCmd = &cobra.Command{
+	Use:   "counter",
+	Short: "Get or set the invoice counter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		var counter api.InvoiceCounter
+		if _, err := client.Get(fmt.Sprintf(api.EndpointInvoiceCounter, slug), &counter); err != nil {
+			return fmt.Errorf("fetching invoice counter: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(counter)
+		}
+
+		fmt.Printf("Invoice counter: %d\n", counter.Counter)
+		return nil
+	},
+}
+
+var invoicesCounterSetCmd = &cobra.Command{
+	Use:   "set",
+	Short: "Set the invoice counter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		value, _ := cmd.Flags().GetInt64("value")
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		req := api.InvoiceCounter{Counter: value}
+		if err := client.Post(fmt.Sprintf(api.EndpointInvoiceCounter, slug), req, nil); err != nil {
+			return fmt.Errorf("setting invoice counter: %w", err)
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Invoice counter set to %d", value))
+		return nil
+	},
+}
+
+var invoicesAttachmentsCmd = &cobra.Command{
+	Use:   "attachments [id]",
+	Short: "List attachments for an invoice",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid ID %q: %w", args[0], err)
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		var attachments []api.Attachment
+		endpoint := fmt.Sprintf(api.EndpointInvoiceAttachments, slug, id)
+		if _, err := client.Get(endpoint, &attachments); err != nil {
+			return fmt.Errorf("fetching attachments: %w", err)
+		}
+
+		if jsonOutput {
+			return output.PrintJSON(attachments)
+		}
+
+		if len(attachments) == 0 {
+			output.PrintInfo("No attachments found.")
+			return nil
+		}
+
+		table := output.NewTable("ATTACHMENT ID", "FILENAME", "TYPE", "DATE")
+		for _, a := range attachments {
+			table.AddRow(
+				fmt.Sprintf("%d", a.AttachmentId),
+				a.Filename,
+				a.Type,
+				a.Date,
+			)
+		}
+		table.Print()
+		return nil
+	},
+}
+
 var invoicesAttachCmd = &cobra.Command{
 	Use:   "attach",
 	Short: "Attach a document to an invoice",
@@ -308,10 +455,24 @@ func init() {
 	invoicesAttachCmd.Flags().String("file", "", "Path to the file to attach (required)")
 	invoicesAttachCmd.MarkFlagRequired("file")
 
+	invoicesSendCmd.Flags().Int64("invoice-id", 0, "Invoice ID to send (required)")
+	invoicesSendCmd.Flags().String("method", "auto", "Delivery method (comma-separated: auto,email,ehf,efaktura,vipps,sms,letter)")
+	invoicesSendCmd.Flags().String("recipient-name", "", "Recipient name (optional)")
+	invoicesSendCmd.Flags().String("recipient-email", "", "Recipient email (optional)")
+	invoicesSendCmd.Flags().String("message", "", "Message to include (optional)")
+	invoicesSendCmd.Flags().Bool("include-document-attachments", false, "Include document attachments")
+
+	invoicesCounterSetCmd.Flags().Int64("value", 0, "Counter value to set (required)")
+	invoicesCounterSetCmd.MarkFlagRequired("value")
+
 	invoicesCmd.AddCommand(invoicesListCmd)
 	invoicesCmd.AddCommand(invoicesCreateCmd)
 	invoicesCmd.AddCommand(invoicesGetCmd)
 	invoicesCmd.AddCommand(invoicesUpdateCmd)
 	invoicesCmd.AddCommand(invoicesAttachCmd)
+	invoicesCmd.AddCommand(invoicesSendCmd)
+	invoicesCmd.AddCommand(invoicesCounterCmd)
+	invoicesCounterCmd.AddCommand(invoicesCounterSetCmd)
+	invoicesCmd.AddCommand(invoicesAttachmentsCmd)
 	rootCmd.AddCommand(invoicesCmd)
 }
