@@ -1,0 +1,62 @@
+---
+description: "Go conventions for the simulation service. Enforces chi router patterns, pgx database access, error handling, and testing conventions."
+globs: "apps/sim/**/*.go"
+alwaysApply: false
+---
+
+# Go Service Conventions (apps/sim/)
+
+## Stack
+- Go 1.25, chi/v5 router, pgx/v5 PostgreSQL driver, godotenv
+- Build: `make build` | Test: `make test` | Dev: `make watch` (air live reload)
+
+## Package Structure
+- `cmd/api/` — HTTP server entrypoint only
+- `internal/server/` — HTTP routes, handlers, middleware (chi router)
+- `internal/database/` — Postgres connection, health checks (pgx/sql.DB singleton)
+- `internal/model/` — Domain types (Deal, SimulationRequest, Metric, YearlyValues)
+- `internal/engine/` — Monte Carlo simulation engine (rng, distribution, copula)
+- `internal/stats/` — Statistical aggregation (Welford, Histogram, Reservoir)
+
+## Patterns to Follow
+
+### HTTP Handlers
+- Receiver methods on `*Server` struct: `func (s *Server) MyHandler(w http.ResponseWriter, r *http.Request)`
+- Follow pattern in `apps/sim/internal/server/routes.go`
+
+### Error Handling
+- Validation: Explicit `Validate()` methods returning `error`
+- Wrapping: `fmt.Errorf("context: %w", err)` for error context
+- Fatal: `log.Fatal()` only for unrecoverable startup errors
+- Follow pattern in `apps/sim/internal/model/simulation.go`
+
+### Database
+- pgx via database/sql stdlib adapter
+- Singleton service with `Service` interface
+- Connection DSN from env vars (`BLUEPRINT_DB_*`)
+- Follow pattern in `apps/sim/internal/database/database.go`
+
+### Config
+- Environment variables loaded via `godotenv/autoload`
+- Read with `os.Getenv()` at init time
+- Env vars prefixed: `BLUEPRINT_DB_*`, `PORT`, `APP_ENV`
+
+### Testing
+- Table-driven tests with standard `testing.T`
+- Manual assertions (no testify/assert)
+- Integration tests with `testcontainers-go` for Postgres
+- HTTP tests with `httptest.NewServer`
+- Follow pattern in `apps/sim/internal/model/model_test.go`
+
+### Naming
+- Files: lowercase with underscores (`database.go`, `routes_test.go`)
+- Packages: lowercase, single word (`server`, `database`, `model`)
+- Types: PascalCase (`Server`, `Deal`, `SimulationRequest`)
+- Constants: PascalCase for exported, SCREAMING_SNAKE for numeric limits
+- Interfaces: suffix with `-Service` (`Service` interface)
+
+## Anti-Patterns
+- Do NOT use gin, fiber, or echo — this project uses chi
+- Do NOT use gorm — this project uses pgx/stdlib
+- Do NOT use testify — use standard assertions
+- Do NOT add new direct dependencies without justification

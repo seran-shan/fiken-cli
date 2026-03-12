@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterFileEdit": [
+      {
+        "type": "prompt",
+        "prompt": "Check if this edit contains obvious/redundant AI-slop comments like '// Import X', '// Define function', '// Handle error', '// Return result', '// Added by AI', '// Initialize variables', '// Set up the config', or comments that just narrate what the next line of code does. Only flag comments that add zero information beyond what the code itself already communicates. Ignore comments that explain WHY something is done, document non-obvious behavior, or describe complex algorithms. Reply { \"ok\": true } if clean, { \"ok\": false, \"reason\": \"Found slop comment: [quote the offending comment]\" } if slop detected.",
+        "timeout": 5
+      },
+      {
+        "command": ".cursor/hooks/post-edit-lint.sh",
+        "timeout": 15
+      }
+    ],
+    "stop": [
+      {
+        "command": ".cursor/hooks/todo-continuation.sh",
+        "loop_limit": 5
+      }
+    ],
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/session-init.sh"
+      }
+    ]
+  }
+}
