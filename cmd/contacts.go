@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 	"strconv"
 
 	"github.com/jakoblind/fiken-cli/api"
@@ -294,6 +295,43 @@ var contactsDeleteCmd = &cobra.Command{
 	},
 }
 
+var contactsAttachCmd = &cobra.Command{
+	Use:   "attach <id>",
+	Short: "Attach a file to a contact",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid ID %q: %w", args[0], err)
+		}
+
+		filePath, _ := cmd.Flags().GetString("file")
+		if err := ValidateFile(filePath); err != nil {
+			return err
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		endpoint := fmt.Sprintf(api.EndpointContactAttachments, slug, id)
+		if err := UploadAttachment(client, endpoint, filePath, map[string]string{
+			"filename": filepath.Base(filePath),
+		}); err != nil {
+			return fmt.Errorf("attaching to contact: %w", err)
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Attachment added to contact %d", id))
+		return nil
+	},
+}
+
 func init() {
 	contactsCreateCmd.Flags().String("name", "", "Contact name (required)")
 	contactsCreateCmd.Flags().String("email", "", "Email address")
@@ -321,10 +359,14 @@ func init() {
 	contactsUpdateCmd.Flags().String("postcode", "", "Post code")
 	contactsUpdateCmd.Flags().String("country", "", "Country code (e.g. 'NOR')")
 
+	contactsAttachCmd.Flags().String("file", "", "Path to the file to attach (required)")
+	contactsAttachCmd.MarkFlagRequired("file")
+
 	contactsCmd.AddCommand(contactsListCmd)
 	contactsCmd.AddCommand(contactsCreateCmd)
 	contactsCmd.AddCommand(contactsGetCmd)
 	contactsCmd.AddCommand(contactsUpdateCmd)
 	contactsCmd.AddCommand(contactsDeleteCmd)
+	contactsCmd.AddCommand(contactsAttachCmd)
 	rootCmd.AddCommand(contactsCmd)
 }
