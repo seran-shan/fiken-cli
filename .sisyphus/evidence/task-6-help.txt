@@ -1,0 +1,51 @@
+Task 6: Journal Create Command - Help Output Evidence
+=====================================================
+
+$ fiken journal create --help
+
+Create a general journal entry (fri postering) with a single debit/credit pair.
+
+Note: debit-amount is the net amount, credit-amount is the gross amount (including VAT).
+
+Example:
+  fiken journal create \
+    --date 2025-01-15 \
+    --description "Office supplies" \
+    --debit-account 6800 \
+    --debit-amount 1000.00 \
+    --credit-account 1920 \
+    --credit-amount 1250.00 \
+    --debit-vat-code 3
+
+Usage:
+  fiken journal create [flags]
+
+Flags:
+      --credit-account string   Account to credit (e.g., 1920)
+      --credit-amount string    Gross amount for credit in decimal, including VAT (e.g., 1250.00)
+      --credit-vat-code int     VAT code integer for credit line
+      --date string             Entry date (yyyy-MM-dd)
+      --debit-account string    Account to debit (e.g., 6800)
+      --debit-amount string     Net amount for debit in decimal (e.g., 1000.00)
+      --debit-vat-code int      VAT code integer for debit line
+      --description string      Journal entry description (max 200 chars)
+  -h, --help                    help for create
+      --open                    If true, entry can be deleted without reverse transaction
+
+Global Flags:
+      --company string           Company slug (auto-detected if only one)
+      --json                     Output as JSON
+      --keyring-backend string   Keyring backend: auto, secret-service, keychain, wincred, pass, file (default "auto")
+      --no-input                 Non-interactive mode
+
+VERIFICATION:
+- [x] --date flag present
+- [x] --description flag present
+- [x] --debit-account flag present
+- [x] --debit-amount flag present (mentions "Net amount")
+- [x] --credit-account flag present
+- [x] --credit-amount flag present (mentions "Gross amount" and "including VAT")
+- [x] --debit-vat-code flag present
+- [x] --credit-vat-code flag present
+- [x] --open flag present
+- [x] Long description mentions net/gross distinction

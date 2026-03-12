@@ -1,0 +1,8 @@
+Task 6: Journal Create Command - Build Evidence
+================================================
+
+$ go build ./...
+BUILD: PASS
+
+$ go vet ./...
+VET: PASS
