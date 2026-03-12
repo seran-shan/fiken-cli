@@ -363,7 +363,7 @@ var creditNotesCounterCmd = &cobra.Command{
 		if jsonOutput {
 			return output.PrintJSON(counter)
 		}
-		fmt.Printf("Credit note counter: %d\n", counter.Counter)
+		fmt.Printf("Credit note counter: %d\n", counter.Value)
 		return nil
 	},
 }
@@ -381,7 +381,7 @@ var creditNotesCounterSetCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
-		req := api.CreditNoteCounter{Counter: value}
+		req := api.CreditNoteCounter{Value: int32(value)}
 		if err := client.Post(fmt.Sprintf(api.EndpointCreditNoteCounter, slug), req, nil); err != nil {
 			return fmt.Errorf("setting credit note counter: %w", err)
 		}

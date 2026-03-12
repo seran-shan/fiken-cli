@@ -318,7 +318,7 @@ var invoicesCounterCmd = &cobra.Command{
 			return output.PrintJSON(counter)
 		}
 
-		fmt.Printf("Invoice counter: %d\n", counter.Counter)
+		fmt.Printf("Invoice counter: %d\n", counter.Value)
 		return nil
 	},
 }
@@ -339,7 +339,7 @@ var invoicesCounterSetCmd = &cobra.Command{
 			return err
 		}
 
-		req := api.InvoiceCounter{Counter: value}
+		req := api.InvoiceCounter{Value: int32(value)}
 		if err := client.Post(fmt.Sprintf(api.EndpointInvoiceCounter, slug), req, nil); err != nil {
 			return fmt.Errorf("setting invoice counter: %w", err)
 		}
@@ -384,13 +384,13 @@ var invoicesAttachmentsCmd = &cobra.Command{
 			return nil
 		}
 
-		table := output.NewTable("ATTACHMENT ID", "FILENAME", "TYPE", "DATE")
+		table := output.NewTable("IDENTIFIER", "TYPE", "COMMENT", "DOWNLOAD URL")
 		for _, a := range attachments {
 			table.AddRow(
-				fmt.Sprintf("%d", a.AttachmentId),
-				a.Filename,
+				a.Identifier,
 				a.Type,
-				a.Date,
+				a.Comment,
+				a.DownloadUrl,
 			)
 		}
 		table.Print()

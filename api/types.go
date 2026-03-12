@@ -511,22 +511,22 @@ type SendInvoiceRequest struct {
 
 // InvoiceCounter represents the invoice counter value.
 type InvoiceCounter struct {
-	Counter int64 `json:"counter"`
+	Value int32 `json:"value"`
 }
 
 // CreditNoteCounter represents the credit note counter value.
 type CreditNoteCounter struct {
-	Counter int64 `json:"counter"`
+	Value int32 `json:"value"`
 }
 
 // OfferCounter represents the offer counter value.
 type OfferCounter struct {
-	Counter int64 `json:"counter"`
+	Value int32 `json:"value"`
 }
 
 // OrderConfirmationCounter represents the order confirmation counter value.
 type OrderConfirmationCounter struct {
-	Counter int64 `json:"counter"`
+	Value int32 `json:"value"`
 }
 
 // SendOfferRequest is the request body for POST /offers/send.
@@ -583,11 +583,13 @@ type ContactPersonRequest struct {
 // --- Attachment type ---
 
 // Attachment represents an attachment on a resource.
+// Attachment represents an attachment on a resource.
 type Attachment struct {
-	AttachmentId int64  `json:"attachmentId"`
-	Filename     string `json:"filename,omitempty"`
-	Type         string `json:"type,omitempty"`
-	Date         string `json:"date,omitempty"`
+	Identifier                                string `json:"identifier,omitempty"`
+	DownloadUrl                               string `json:"downloadUrl,omitempty"`
+	DownloadUrlWithFikenNormalUserCredentials string `json:"downloadUrlWithFikenNormalUserCredentials,omitempty"`
+	Comment                                   string `json:"comment,omitempty"`
+	Type                                      string `json:"type,omitempty"`
 }
 
 // --- Group type ---
