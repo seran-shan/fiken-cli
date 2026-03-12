@@ -17,6 +17,18 @@ const (
 	EndpointJournalEntries  = "/companies/%s/journalEntries"
 	EndpointTransactions    = "/companies/%s/transactions"
 	EndpointContacts        = "/companies/%s/contacts"
+
+	// General journal entry creation endpoint (different from EndpointJournalEntries which is for reading)
+	EndpointGeneralJournalEntries = "/companies/%s/generalJournalEntries"
+
+	// Attachment endpoints (use fmt.Sprintf with company slug and entity int64 ID)
+	EndpointPurchaseAttachments     = "/companies/%s/purchases/%d/attachments"
+	EndpointSaleAttachments         = "/companies/%s/sales/%d/attachments"
+	EndpointInvoiceAttachments      = "/companies/%s/invoices/%d/attachments"
+	EndpointJournalEntryAttachments = "/companies/%s/journalEntries/%d/attachments"
+
+	// Single entity endpoints
+	EndpointTransaction = "/companies/%s/transactions/%d"
 )
 
 // Pagination defaults
