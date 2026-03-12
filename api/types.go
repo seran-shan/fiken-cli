@@ -514,6 +514,31 @@ type InvoiceCounter struct {
 	Counter int64 `json:"counter"`
 }
 
+// CreditNoteCounter represents the credit note counter value.
+type CreditNoteCounter struct {
+	Counter int64 `json:"counter"`
+}
+
+// OfferCounter represents the offer counter value.
+type OfferCounter struct {
+	Counter int64 `json:"counter"`
+}
+
+// OrderConfirmationCounter represents the order confirmation counter value.
+type OrderConfirmationCounter struct {
+	Counter int64 `json:"counter"`
+}
+
+// SendOfferRequest is the request body for POST /offers/send.
+type SendOfferRequest struct {
+	OfferId                    int64    `json:"offerId"`
+	Method                     []string `json:"method,omitempty"`
+	RecipientName              string   `json:"recipientName,omitempty"`
+	RecipientEmail             string   `json:"recipientEmail,omitempty"`
+	Message                    string   `json:"message,omitempty"`
+	IncludeDocumentAttachments bool     `json:"includeDocumentAttachments,omitempty"`
+}
+
 // --- Bank types ---
 
 // BankAccountRequest is used to create a new bank account.

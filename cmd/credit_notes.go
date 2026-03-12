@@ -344,6 +344,52 @@ var creditNotesSendCmd = &cobra.Command{
 	},
 }
 
+var creditNotesCounterCmd = &cobra.Command{
+	Use:   "counter",
+	Short: "Get or set the credit note counter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+		var counter api.CreditNoteCounter
+		if _, err := client.Get(fmt.Sprintf(api.EndpointCreditNoteCounter, slug), &counter); err != nil {
+			return fmt.Errorf("fetching credit note counter: %w", err)
+		}
+		if jsonOutput {
+			return output.PrintJSON(counter)
+		}
+		fmt.Printf("Credit note counter: %d\n", counter.Counter)
+		return nil
+	},
+}
+
+var creditNotesCounterSetCmd = &cobra.Command{
+	Use:   "set",
+	Short: "Set the credit note counter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		value, _ := cmd.Flags().GetInt64("value")
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+		req := api.CreditNoteCounter{Counter: value}
+		if err := client.Post(fmt.Sprintf(api.EndpointCreditNoteCounter, slug), req, nil); err != nil {
+			return fmt.Errorf("setting credit note counter: %w", err)
+		}
+		output.PrintSuccess(fmt.Sprintf("Credit note counter set to %d", value))
+		return nil
+	},
+}
+
 func init() {
 	creditNotesListCmd.Flags().String("issue-date", "", "Filter by issue date (YYYY-MM-DD)")
 	creditNotesListCmd.Flags().Bool("settled", false, "Filter by settled status")
@@ -380,10 +426,15 @@ func init() {
 	creditNotesSendCmd.Flags().String("organization-number", "", "Organization number (optional)")
 	creditNotesSendCmd.Flags().String("mobile-number", "", "Mobile number (optional)")
 
+	creditNotesCounterSetCmd.Flags().Int64("value", 0, "Counter value to set (required)")
+	creditNotesCounterSetCmd.MarkFlagRequired("value")
+
 	creditNotesCmd.AddCommand(creditNotesListCmd)
 	creditNotesCmd.AddCommand(creditNotesGetCmd)
 	creditNotesCmd.AddCommand(creditNotesCreateFullCmd)
 	creditNotesCmd.AddCommand(creditNotesCreatePartialCmd)
 	creditNotesCmd.AddCommand(creditNotesSendCmd)
+	creditNotesCmd.AddCommand(creditNotesCounterCmd)
+	creditNotesCounterCmd.AddCommand(creditNotesCounterSetCmd)
 	rootCmd.AddCommand(creditNotesCmd)
 }

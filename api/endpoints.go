@@ -114,9 +114,14 @@ const (
 	EndpointCreditNoteDraftAttachments = "/companies/%s/creditNotes/drafts/%d/attachments"
 	EndpointCreditNoteDraftFinalize    = "/companies/%s/creditNotes/drafts/%d/createCreditNote"
 
+	// Credit note counter
+	EndpointCreditNoteCounter = "/companies/%s/creditNotes/counter"
+
 	// Offer endpoints
 	EndpointOffers                 = "/companies/%s/offers"
 	EndpointOffer                  = "/companies/%s/offers/%d"
+	EndpointOfferCounter           = "/companies/%s/offers/counter"
+	EndpointOfferSend              = "/companies/%s/offers/send"
 	EndpointOfferDrafts            = "/companies/%s/offers/drafts"
 	EndpointOfferDraft             = "/companies/%s/offers/drafts/%d"
 	EndpointOfferDraftAttachments  = "/companies/%s/offers/drafts/%d/attachments"
@@ -125,6 +130,8 @@ const (
 	// Order confirmation endpoints
 	EndpointOrderConfirmations                = "/companies/%s/orderConfirmations"
 	EndpointOrderConfirmation                 = "/companies/%s/orderConfirmations/%d"
+	EndpointOrderConfirmationCounter          = "/companies/%s/orderConfirmations/counter"
+	EndpointOrderConfirmationCreateInvoiceDraft = "/companies/%s/orderConfirmations/%d/createInvoiceDraft"
 	EndpointOrderConfirmationDrafts           = "/companies/%s/orderConfirmations/drafts"
 	EndpointOrderConfirmationDraft            = "/companies/%s/orderConfirmations/drafts/%d"
 	EndpointOrderConfirmationDraftAttachments = "/companies/%s/orderConfirmations/drafts/%d/attachments"

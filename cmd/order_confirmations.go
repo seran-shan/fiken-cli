@@ -120,8 +120,96 @@ var orderConfirmationsGetCmd = &cobra.Command{
 	},
 }
 
+var orderConfirmationsCounterCmd = &cobra.Command{
+	Use:   "counter",
+	Short: "Get or set the order confirmation counter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+		var counter api.OrderConfirmationCounter
+		if _, err := client.Get(fmt.Sprintf(api.EndpointOrderConfirmationCounter, slug), &counter); err != nil {
+			return fmt.Errorf("fetching order confirmation counter: %w", err)
+		}
+		if jsonOutput {
+			return output.PrintJSON(counter)
+		}
+		fmt.Printf("Order confirmation counter: %d\n", counter.Counter)
+		return nil
+	},
+}
+
+var orderConfirmationsCounterSetCmd = &cobra.Command{
+	Use:   "set",
+	Short: "Set the order confirmation counter",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		value, _ := cmd.Flags().GetInt64("value")
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+		req := api.OrderConfirmationCounter{Counter: value}
+		if err := client.Post(fmt.Sprintf(api.EndpointOrderConfirmationCounter, slug), req, nil); err != nil {
+			return fmt.Errorf("setting order confirmation counter: %w", err)
+		}
+		output.PrintSuccess(fmt.Sprintf("Order confirmation counter set to %d", value))
+		return nil
+	},
+}
+
+var orderConfirmationsCreateInvoiceDraftCmd = &cobra.Command{
+	Use:   "create-invoice-draft <id>",
+	Short: "Create an invoice draft from an order confirmation",
+	Args:  cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		id, err := strconv.ParseInt(args[0], 10, 64)
+		if err != nil {
+			return fmt.Errorf("invalid ID %q: %w", args[0], err)
+		}
+
+		client, err := getClient()
+		if err != nil {
+			return err
+		}
+
+		slug, err := resolveCompany(client)
+		if err != nil {
+			return err
+		}
+
+		endpoint := fmt.Sprintf(api.EndpointOrderConfirmationCreateInvoiceDraft, slug, id)
+		locationURL, err := client.PostEmpty(endpoint)
+		if err != nil {
+			return fmt.Errorf("creating invoice draft from order confirmation: %w", err)
+		}
+
+		draftID, err := api.ParseIDFromLocation(locationURL)
+		if err != nil {
+			return fmt.Errorf("parsing draft ID: %w", err)
+		}
+
+		output.PrintSuccess(fmt.Sprintf("Invoice draft created from order confirmation %d (Draft ID: %d)", id, draftID))
+		return nil
+	},
+}
+
 func init() {
+	orderConfirmationsCounterSetCmd.Flags().Int64("value", 0, "Counter value to set (required)")
+	orderConfirmationsCounterSetCmd.MarkFlagRequired("value")
+
 	orderConfirmationsCmd.AddCommand(orderConfirmationsListCmd)
 	orderConfirmationsCmd.AddCommand(orderConfirmationsGetCmd)
+	orderConfirmationsCmd.AddCommand(orderConfirmationsCounterCmd)
+	orderConfirmationsCounterCmd.AddCommand(orderConfirmationsCounterSetCmd)
+	orderConfirmationsCmd.AddCommand(orderConfirmationsCreateInvoiceDraftCmd)
 	rootCmd.AddCommand(orderConfirmationsCmd)
 }
