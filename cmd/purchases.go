@@ -144,6 +144,17 @@ var purchasesCreateCmd = &cobra.Command{
 			return fmt.Errorf("--kind must be 'cash_purchase' or 'supplier', got %q", kind)
 		}
 
+		if filePath != "" {
+			if _, err := os.Stat(filePath); os.IsNotExist(err) {
+				return fmt.Errorf("file not found: %s", filePath)
+			}
+			ext := strings.ToLower(filepath.Ext(filePath))
+			allowed := map[string]bool{".pdf": true, ".png": true, ".jpg": true, ".jpeg": true, ".gif": true}
+			if !allowed[ext] {
+				return fmt.Errorf("unsupported file extension %q: must be .pdf, .png, .jpg, .jpeg, or .gif", ext)
+			}
+		}
+
 		amountCents, err := parseAmountToCents(amountStr)
 		if err != nil {
 			return err
@@ -191,7 +202,41 @@ var purchasesCreateCmd = &cobra.Command{
 		output.PrintSuccess(fmt.Sprintf("Purchase created (ID: %d)", id))
 
 		if filePath != "" {
-			output.PrintInfo("Note: --file attachment will be added in a future update. Use 'fiken purchases attach' to attach manually.")
+			body := &bytes.Buffer{}
+			writer := multipart.NewWriter(body)
+
+			writer.WriteField("filename", filepath.Base(filePath))
+			writer.WriteField("attachToPayment", "true")
+			writer.WriteField("attachToSale", "true")
+
+			f, err := os.Open(filePath)
+			if err != nil {
+				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
+				return nil
+			}
+			defer f.Close()
+
+			part, err := writer.CreateFormFile("file", filepath.Base(filePath))
+			if err != nil {
+				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
+				return nil
+			}
+
+			if _, err := io.Copy(part, f); err != nil {
+				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
+				return nil
+			}
+
+			writer.Close()
+
+			endpoint := fmt.Sprintf(api.EndpointPurchaseAttachments, slug, id)
+			_, attachErr := client.PostMultipart(endpoint, body, writer.FormDataContentType())
+			if attachErr != nil {
+				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, attachErr, id, filePath))
+				return nil
+			}
+
+			output.PrintSuccess(fmt.Sprintf("Receipt attached to purchase %d", id))
 		}
 
 		return nil

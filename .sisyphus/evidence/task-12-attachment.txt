@@ -1,0 +1,18 @@
+=== Task 12: Attachment logic verification ===
+
+--- File validation (before API call) ---
+148:			if _, err := os.Stat(filePath); os.IsNotExist(err) {
+149:				return fmt.Errorf("file not found: %s", filePath)
+154:				return fmt.Errorf("unsupported file extension %q: must be .pdf, .png, .jpg, .jpeg, or .gif", ext)
+255:		if _, err := os.Stat(filePath); os.IsNotExist(err) {
+256:			return fmt.Errorf("file not found: %s", filePath)
+262:			return fmt.Errorf("unsupported file extension %q: must be .pdf, .png, .jpg, .jpeg, or .gif", ext)
+
+--- Attachment error recovery message ---
+214:				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
+221:				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
+226:				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, err, id, filePath))
+235:				output.PrintError(fmt.Sprintf("Purchase created (ID: %d) but attachment failed: %v. Use 'fiken purchases attach --id %d --file %s' to retry.", id, attachErr, id, filePath))
+
+--- Old placeholder removed ---
+(not found - correctly removed)

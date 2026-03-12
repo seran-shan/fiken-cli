@@ -1,0 +1,7 @@
+=== Task 12: Wire --file flag on purchases create ===
+
+--- go build ./... ---
+EXIT: 0
+
+--- go vet ./... ---
+EXIT: 0
