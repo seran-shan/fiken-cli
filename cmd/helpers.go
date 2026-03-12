@@ -66,6 +66,9 @@ func UploadAttachment(client *api.Client, endpoint string, filePath string, fiel
 // Uses integer arithmetic only to avoid float64 precision issues.
 func ParseAmountToCents(s string) (int64, error) {
 	s = strings.TrimSpace(s)
+	if s == "" {
+		return 0, fmt.Errorf("invalid amount %q: must be a non-negative number like 100.00", s)
+	}
 	parts := strings.SplitN(s, ".", 2)
 	whole, err := strconv.ParseInt(parts[0], 10, 64)
 	if err != nil || whole < 0 {
@@ -74,13 +77,25 @@ func ParseAmountToCents(s string) (int64, error) {
 	cents := whole * 100
 	if len(parts) == 2 {
 		dec := parts[1]
+		if len(dec) > 2 {
+			return 0, fmt.Errorf("invalid amount %q: use at most two decimal places", s)
+		}
 		switch len(dec) {
 		case 1:
-			d, _ := strconv.ParseInt(dec, 10, 64)
+			d, err := strconv.ParseInt(dec, 10, 64)
+			if err != nil {
+				return 0, fmt.Errorf("invalid amount %q: must be a non-negative number like 100.00", s)
+			}
 			cents += d * 10
-		default:
-			d, _ := strconv.ParseInt(dec[:2], 10, 64)
+		case 2:
+			d, err := strconv.ParseInt(dec, 10, 64)
+			if err != nil {
+				return 0, fmt.Errorf("invalid amount %q: must be a non-negative number like 100.00", s)
+			}
 			cents += d
+		case 0:
+		default:
+			return 0, fmt.Errorf("invalid amount %q: must be a non-negative number like 100.00", s)
 		}
 	}
 	return cents, nil
