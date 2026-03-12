@@ -70,20 +70,25 @@ var orderConfirmationsDraftsCreateCmd = &cobra.Command{
 	Long:  "Create a new order confirmation draft with a single line item.",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		customerID, _ := cmd.Flags().GetInt64("customer-id")
+		contactPersonID, _ := cmd.Flags().GetInt64("contact-person-id")
+		days, _ := cmd.Flags().GetInt64("days")
+		hours, _ := cmd.Flags().GetFloat64("hours")
+		currency, _ := cmd.Flags().GetString("currency")
+		bankAccountCode, _ := cmd.Flags().GetString("bank-account-code")
+		yourReference, _ := cmd.Flags().GetString("your-reference")
+		ourReference, _ := cmd.Flags().GetString("our-reference")
+		orderReference, _ := cmd.Flags().GetString("order-reference")
+		projectID, _ := cmd.Flags().GetInt64("project-id")
+		invoiceIssueDate, _ := cmd.Flags().GetString("invoice-issue-date")
+		invoiceNumber, _ := cmd.Flags().GetString("invoice-number")
 		description, _ := cmd.Flags().GetString("description")
 		quantity, _ := cmd.Flags().GetInt64("quantity")
 		unitPriceStr, _ := cmd.Flags().GetString("unit-price")
 		vatType, _ := cmd.Flags().GetString("vat-type")
-		ourReference, _ := cmd.Flags().GetString("our-reference")
-		yourReference, _ := cmd.Flags().GetString("your-reference")
-		orderReference, _ := cmd.Flags().GetString("order-reference")
-		projectID, _ := cmd.Flags().GetInt64("project-id")
 		productID, _ := cmd.Flags().GetInt64("product-id")
+		discount, _ := cmd.Flags().GetInt64("discount")
 
 		var missing []string
-		if customerID == 0 {
-			missing = append(missing, "--customer-id")
-		}
 		if description == "" {
 			missing = append(missing, "--description")
 		}
@@ -124,17 +129,25 @@ var orderConfirmationsDraftsCreateCmd = &cobra.Command{
 		if productID != 0 {
 			line.ProductId = productID
 		}
+		if discount != 0 {
+			line.Discount = discount
+		}
 
 		req := api.InvoiceishDraftRequest{
-			Type:           "orderConfirmation",
-			CustomerId:     customerID,
-			OurReference:   ourReference,
-			YourReference:  yourReference,
-			OrderReference: orderReference,
-			Lines:          []api.InvoiceDraftLineRequest{line},
-		}
-		if projectID != 0 {
-			req.ProjectId = projectID
+			Type:             "orderConfirmation",
+			CustomerId:       customerID,
+			ContactPersonId:  contactPersonID,
+			Days:             days,
+			Hours:            hours,
+			Currency:         currency,
+			BankAccountCode:  bankAccountCode,
+			YourReference:    yourReference,
+			OurReference:     ourReference,
+			OrderReference:   orderReference,
+			ProjectId:        projectID,
+			InvoiceIssueDate: invoiceIssueDate,
+			InvoiceNumber:    invoiceNumber,
+			Lines:            []api.InvoiceDraftLineRequest{line},
 		}
 
 		locationURL, err := client.PostCreate(fmt.Sprintf(api.EndpointOrderConfirmationDrafts, slug), req)
@@ -190,8 +203,23 @@ var orderConfirmationsDraftsGetCmd = &cobra.Command{
 		table.AddRow("Net", output.FormatAmount(draft.Net))
 		table.AddRow("VAT", output.FormatAmount(draft.Vat))
 		table.AddRow("Gross", output.FormatAmount(draft.Gross))
+		table.AddRow("Currency", draft.Currency)
 		table.AddRow("Last Modified", draft.LastModifiedDate)
 		table.Print()
+
+		if len(draft.Lines) > 0 {
+			fmt.Println()
+			lines := output.NewTable("DESCRIPTION", "QUANTITY", "UNIT PRICE", "VAT TYPE")
+			for _, l := range draft.Lines {
+				lines.AddRow(
+					l.Description,
+					fmt.Sprintf("%d", l.Quantity),
+					output.FormatAmount(l.UnitPrice),
+					l.VatType,
+				)
+			}
+			lines.Print()
+		}
 		return nil
 	},
 }
@@ -223,19 +251,45 @@ var orderConfirmationsDraftsUpdateCmd = &cobra.Command{
 		}
 
 		req := api.InvoiceishDraftRequest{
-			Type:       existing.Type,
-			CustomerId: existing.CustomerId,
-			Lines:      existing.Lines,
+			Type:             existing.Type,
+			CustomerId:       existing.CustomerId,
+			ContactPersonId:  existing.ContactPersonId,
+			Days:             existing.Days,
+			Hours:            existing.Hours,
+			Currency:         existing.Currency,
+			BankAccountCode:  existing.BankAccountCode,
+			YourReference:    existing.YourReference,
+			OurReference:     existing.OurReference,
+			OrderReference:   existing.OrderReference,
+			ProjectId:        existing.ProjectId,
+			InvoiceIssueDate: existing.InvoiceIssueDate,
+			InvoiceNumber:    existing.InvoiceNumber,
+			Lines:            existing.Lines,
 		}
 
 		if cmd.Flags().Changed("customer-id") {
 			req.CustomerId, _ = cmd.Flags().GetInt64("customer-id")
 		}
-		if cmd.Flags().Changed("our-reference") {
-			req.OurReference, _ = cmd.Flags().GetString("our-reference")
+		if cmd.Flags().Changed("contact-person-id") {
+			req.ContactPersonId, _ = cmd.Flags().GetInt64("contact-person-id")
+		}
+		if cmd.Flags().Changed("days") {
+			req.Days, _ = cmd.Flags().GetInt64("days")
+		}
+		if cmd.Flags().Changed("hours") {
+			req.Hours, _ = cmd.Flags().GetFloat64("hours")
+		}
+		if cmd.Flags().Changed("currency") {
+			req.Currency, _ = cmd.Flags().GetString("currency")
+		}
+		if cmd.Flags().Changed("bank-account-code") {
+			req.BankAccountCode, _ = cmd.Flags().GetString("bank-account-code")
 		}
 		if cmd.Flags().Changed("your-reference") {
 			req.YourReference, _ = cmd.Flags().GetString("your-reference")
+		}
+		if cmd.Flags().Changed("our-reference") {
+			req.OurReference, _ = cmd.Flags().GetString("our-reference")
 		}
 		if cmd.Flags().Changed("order-reference") {
 			req.OrderReference, _ = cmd.Flags().GetString("order-reference")
@@ -243,10 +297,16 @@ var orderConfirmationsDraftsUpdateCmd = &cobra.Command{
 		if cmd.Flags().Changed("project-id") {
 			req.ProjectId, _ = cmd.Flags().GetInt64("project-id")
 		}
+		if cmd.Flags().Changed("invoice-issue-date") {
+			req.InvoiceIssueDate, _ = cmd.Flags().GetString("invoice-issue-date")
+		}
+		if cmd.Flags().Changed("invoice-number") {
+			req.InvoiceNumber, _ = cmd.Flags().GetString("invoice-number")
+		}
 
 		lineChanged := cmd.Flags().Changed("description") || cmd.Flags().Changed("quantity") ||
 			cmd.Flags().Changed("unit-price") || cmd.Flags().Changed("vat-type") ||
-			cmd.Flags().Changed("product-id")
+			cmd.Flags().Changed("product-id") || cmd.Flags().Changed("discount")
 
 		if lineChanged {
 			var line api.InvoiceDraftLineRequest
@@ -272,6 +332,9 @@ var orderConfirmationsDraftsUpdateCmd = &cobra.Command{
 			}
 			if cmd.Flags().Changed("product-id") {
 				line.ProductId, _ = cmd.Flags().GetInt64("product-id")
+			}
+			if cmd.Flags().Changed("discount") {
+				line.Discount, _ = cmd.Flags().GetInt64("discount")
 			}
 			req.Lines = []api.InvoiceDraftLineRequest{line}
 		}
@@ -391,27 +454,43 @@ var orderConfirmationsDraftsFinalizeCmd = &cobra.Command{
 }
 
 func init() {
-	orderConfirmationsDraftsCreateCmd.Flags().Int64("customer-id", 0, "Customer contact ID (required)")
+	orderConfirmationsDraftsCreateCmd.Flags().Int64("customer-id", 0, "Customer contact ID")
+	orderConfirmationsDraftsCreateCmd.Flags().Int64("contact-person-id", 0, "Contact person ID")
+	orderConfirmationsDraftsCreateCmd.Flags().Int64("days", 0, "Days")
+	orderConfirmationsDraftsCreateCmd.Flags().Float64("hours", 0, "Hours")
+	orderConfirmationsDraftsCreateCmd.Flags().String("currency", "NOK", "Currency code")
+	orderConfirmationsDraftsCreateCmd.Flags().String("bank-account-code", "", "Bank account code")
+	orderConfirmationsDraftsCreateCmd.Flags().String("your-reference", "", "Your reference")
+	orderConfirmationsDraftsCreateCmd.Flags().String("our-reference", "", "Our reference")
+	orderConfirmationsDraftsCreateCmd.Flags().String("order-reference", "", "Order reference")
+	orderConfirmationsDraftsCreateCmd.Flags().Int64("project-id", 0, "Project ID")
+	orderConfirmationsDraftsCreateCmd.Flags().String("invoice-issue-date", "", "Invoice issue date (YYYY-MM-DD)")
+	orderConfirmationsDraftsCreateCmd.Flags().String("invoice-number", "", "Invoice number")
 	orderConfirmationsDraftsCreateCmd.Flags().String("description", "", "Line item description (required)")
 	orderConfirmationsDraftsCreateCmd.Flags().Int64("quantity", 0, "Line item quantity (required)")
 	orderConfirmationsDraftsCreateCmd.Flags().String("unit-price", "", "Unit price in decimal format e.g. '1000.00' (required)")
 	orderConfirmationsDraftsCreateCmd.Flags().String("vat-type", "", "VAT type e.g. 'HIGH', 'NONE', 'MEDIUM' (required)")
-	orderConfirmationsDraftsCreateCmd.Flags().String("our-reference", "", "Our reference (optional)")
-	orderConfirmationsDraftsCreateCmd.Flags().String("your-reference", "", "Your reference (optional)")
-	orderConfirmationsDraftsCreateCmd.Flags().String("order-reference", "", "Order reference (optional)")
-	orderConfirmationsDraftsCreateCmd.Flags().Int64("project-id", 0, "Project ID (optional)")
-	orderConfirmationsDraftsCreateCmd.Flags().Int64("product-id", 0, "Product ID for the line item (optional)")
+	orderConfirmationsDraftsCreateCmd.Flags().Int64("product-id", 0, "Product ID for the line item")
+	orderConfirmationsDraftsCreateCmd.Flags().Int64("discount", 0, "Discount percentage")
 
 	orderConfirmationsDraftsUpdateCmd.Flags().Int64("customer-id", 0, "Customer contact ID")
+	orderConfirmationsDraftsUpdateCmd.Flags().Int64("contact-person-id", 0, "Contact person ID")
+	orderConfirmationsDraftsUpdateCmd.Flags().Int64("days", 0, "Days")
+	orderConfirmationsDraftsUpdateCmd.Flags().Float64("hours", 0, "Hours")
+	orderConfirmationsDraftsUpdateCmd.Flags().String("currency", "", "Currency code")
+	orderConfirmationsDraftsUpdateCmd.Flags().String("bank-account-code", "", "Bank account code")
+	orderConfirmationsDraftsUpdateCmd.Flags().String("your-reference", "", "Your reference")
+	orderConfirmationsDraftsUpdateCmd.Flags().String("our-reference", "", "Our reference")
+	orderConfirmationsDraftsUpdateCmd.Flags().String("order-reference", "", "Order reference")
+	orderConfirmationsDraftsUpdateCmd.Flags().Int64("project-id", 0, "Project ID")
+	orderConfirmationsDraftsUpdateCmd.Flags().String("invoice-issue-date", "", "Invoice issue date (YYYY-MM-DD)")
+	orderConfirmationsDraftsUpdateCmd.Flags().String("invoice-number", "", "Invoice number")
 	orderConfirmationsDraftsUpdateCmd.Flags().String("description", "", "Line item description")
 	orderConfirmationsDraftsUpdateCmd.Flags().Int64("quantity", 0, "Line item quantity")
 	orderConfirmationsDraftsUpdateCmd.Flags().String("unit-price", "", "Unit price in decimal format e.g. '1000.00'")
 	orderConfirmationsDraftsUpdateCmd.Flags().String("vat-type", "", "VAT type e.g. 'HIGH', 'NONE', 'MEDIUM'")
-	orderConfirmationsDraftsUpdateCmd.Flags().String("our-reference", "", "Our reference")
-	orderConfirmationsDraftsUpdateCmd.Flags().String("your-reference", "", "Your reference")
-	orderConfirmationsDraftsUpdateCmd.Flags().String("order-reference", "", "Order reference")
-	orderConfirmationsDraftsUpdateCmd.Flags().Int64("project-id", 0, "Project ID")
 	orderConfirmationsDraftsUpdateCmd.Flags().Int64("product-id", 0, "Product ID for the line item")
+	orderConfirmationsDraftsUpdateCmd.Flags().Int64("discount", 0, "Discount percentage")
 
 	orderConfirmationsDraftsAttachCmd.Flags().String("file", "", "Path to the file to attach (required)")
 	orderConfirmationsDraftsAttachCmd.MarkFlagRequired("file")
