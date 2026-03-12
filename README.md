@@ -6,8 +6,12 @@ A command-line client for the [Fiken.no](https://fiken.no) accounting API. Manag
 
 - 🏢 List and manage companies
 - 📊 Chart of accounts and balances
-- 🛒 View purchases and expenses
-- 📥 EHF inbox management
+- 🛒 Create and manage purchases with receipt attachments
+- 💰 Create and manage sales with document attachments
+- 📄 Create invoices and attach supporting documents
+- 📒 Create general journal entries with attachments
+- 🔄 View transactions (auto-generated from purchases/sales/journal entries)
+- 📥 EHF inbox management and document upload
 - 🏦 Bank account overview
 - 📋 Dashboard with key metrics
 - 🔄 JSON output for scripting
@@ -18,7 +22,7 @@ A command-line client for the [Fiken.no](https://fiken.no) accounting API. Manag
 ### From source
 
 ```bash
-git clone https://github.com/jakoblind/fiken-cli.git
+git clone https://github.com/seran-shan/fiken-cli.git
 cd fiken-cli
 make install
 ```
@@ -103,12 +107,63 @@ fiken bank list             # List bank accounts
 ```bash
 fiken inbox                 # List all inbox documents
 fiken inbox --status pending    # Filter by status
+fiken inbox upload --file <path>  # Upload document to inbox
+fiken inbox upload --file receipt.pdf --name "Office supplies" --description "Q1 office supplies"
 ```
 
 ### Purchases
 
 ```bash
 fiken purchases list        # List purchases
+fiken purchases create \    # Create a new purchase
+  --date 2025-01-15 \
+  --kind cash_purchase \
+  --account 1920 \
+  --amount 1500.00 \
+  --vat-type HIGH \
+  --supplier "Office Supplies AS"
+fiken purchases create \    # Create purchase with receipt attached
+  --date 2025-01-15 \
+  --kind cash_purchase \
+  --account 1920 \
+  --amount 1500.00 \
+  --vat-type HIGH \
+  --file receipt.pdf
+fiken purchases attach --id 123 --file receipt.pdf  # Attach receipt to existing purchase
+```
+
+### Sales
+
+```bash
+fiken sales list            # List sales
+fiken sales attach --id 123 --file document.pdf  # Attach document to existing sale
+```
+
+### Invoices
+
+```bash
+fiken invoices list         # List invoices
+fiken invoices attach --id 123 --file document.pdf  # Attach document to existing invoice
+```
+
+### Journal Entries
+
+```bash
+fiken journal create \      # Create a general journal entry
+  --date 2025-01-15 \
+  --description "Year-end adjustment" \
+  --debit-account 1920 \
+  --credit-account 3000 \
+  --amount 5000.00
+fiken journal attach --id 123 --file document.pdf  # Attach document to journal entry
+```
+
+### Transactions
+
+```bash
+fiken transactions list     # List all transactions
+fiken transactions list --last-modified 2025-01-01  # Filter by date
+fiken transactions get 456  # Get a specific transaction
 ```
 
 ### Status Dashboard
@@ -164,6 +219,7 @@ If you previously stored your token in `~/.config/fiken/token`, it will be autom
 - Amounts are in cents (øre): `100000` = `1 000,00 kr`
 - Rate limit: max 4 requests/second (enforced by client)
 - Pagination: automatic for large result sets
+- Amounts in CLI are entered as decimals (e.g., `1500.00`) and auto-converted to cents
 
 ## Examples
 
@@ -189,6 +245,32 @@ fiken purchases list --company my-company-slug
 
 ```bash
 fiken status --json | jq '.inbox_count'
+```
+
+### Upload a receipt to inbox
+
+```bash
+fiken inbox upload --file receipt.pdf --name "Lunch receipt"
+```
+
+### Create a purchase with receipt
+
+```bash
+fiken purchases create --date 2025-01-15 --kind cash_purchase \
+  --account 1920 --amount 250.00 --vat-type HIGH --file receipt.jpg
+```
+
+### Create a journal entry
+
+```bash
+fiken journal create --date 2025-01-15 --description "Depreciation" \
+  --debit-account 6000 --credit-account 1200 --amount 10000.00
+```
+
+### Attach receipt to existing purchase
+
+```bash
+fiken purchases attach --id 12345 --file receipt.pdf
 ```
 
 ## Development
