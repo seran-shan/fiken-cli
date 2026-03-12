@@ -59,6 +59,49 @@ const (
 	EndpointPurchase         = "/companies/%s/purchases/%d"
 	EndpointPurchasePayments = "/companies/%s/purchases/%d/payments"
 	EndpointPurchasePayment  = "/companies/%s/purchases/%d/payments/%d"
+	EndpointPurchaseDelete           = "/companies/%s/purchases/%d/delete"
+	EndpointPurchaseDrafts           = "/companies/%s/purchases/drafts"
+	EndpointPurchaseDraft            = "/companies/%s/purchases/drafts/%d"
+	EndpointPurchaseDraftAttachments = "/companies/%s/purchases/drafts/%d/attachments"
+	EndpointPurchaseDraftFinalize    = "/companies/%s/purchases/drafts/%d/createPurchase"
+
+	// Journal endpoints (additions)
+	EndpointJournalEntry = "/companies/%s/journalEntries/%d"
+
+	// Invoice endpoints (additions)
+	EndpointInvoiceSend    = "/companies/%s/invoices/send"
+	EndpointInvoiceCounter = "/companies/%s/invoices/counter"
+
+	// Bank endpoints (additions)
+	EndpointBankAccount  = "/companies/%s/bankAccounts/%d"
+	EndpointBankBalances = "/companies/%s/bankBalances"
+
+	// Transaction endpoints (additions)
+	EndpointTransactionDelete = "/companies/%s/transactions/%d/delete"
+
+	// Contact endpoints (additions)
+	EndpointContactAttachments = "/companies/%s/contacts/%d/attachments"
+	EndpointContactPersons     = "/companies/%s/contacts/%d/contactPerson"
+	EndpointContactPerson      = "/companies/%s/contacts/%d/contactPerson/%d"
+
+	// Groups
+	EndpointGroups = "/companies/%s/groups"
+
+	// Product endpoints (additions)
+	EndpointProductSalesReport = "/companies/%s/products/salesReport"
+
+	// Inbox endpoints (additions)
+	EndpointInboxDocument = "/companies/%s/inbox/%d"
+
+	// Company endpoints (additions)
+	EndpointCompany = "/companies/%s"
+
+	// User
+	EndpointUser = "/user"
+
+	// Account/Balance endpoints (additions)
+	EndpointAccountBalance = "/companies/%s/accountBalances/%s"
+	EndpointAccount        = "/companies/%s/accounts/%s"
 )
 
 // Pagination defaults

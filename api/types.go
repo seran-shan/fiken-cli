@@ -461,3 +461,145 @@ type PaymentRequest struct {
 	Amount   int64  `json:"amount"`
 	Currency string `json:"currency,omitempty"`
 }
+
+// --- Purchase draft types ---
+
+// PurchaseDraftRequest is the write schema for creating/updating purchase drafts.
+type PurchaseDraftRequest struct {
+	Cash             bool               `json:"cash"`
+	DueDate          string             `json:"dueDate,omitempty"`
+	InvoiceNumber    string             `json:"invoiceNumber,omitempty"`
+	Kid              string             `json:"kid,omitempty"`
+	ProjectId        int64              `json:"projectId,omitempty"`
+	InvoiceIssueDate string             `json:"invoiceIssueDate,omitempty"`
+	Lines            []DraftLineRequest `json:"lines,omitempty"`
+	SupplierId       int64              `json:"supplierId,omitempty"`
+	Paid             bool               `json:"paid"`
+	Currency         string             `json:"currency,omitempty"`
+}
+
+// PurchaseDraft is the response type for a purchase draft.
+type PurchaseDraft struct {
+	DraftId       int64              `json:"draftId"`
+	Uuid          string             `json:"uuid,omitempty"`
+	Cash          bool               `json:"cash"`
+	Lines         []DraftLineRequest `json:"lines,omitempty"`
+	SupplierId    int64              `json:"supplierId,omitempty"`
+	DueDate       string             `json:"dueDate,omitempty"`
+	InvoiceNumber string             `json:"invoiceNumber,omitempty"`
+	Kid           string             `json:"kid,omitempty"`
+	ProjectId     int64              `json:"projectId,omitempty"`
+	Paid          bool               `json:"paid"`
+}
+
+type PurchaseDraftsResponse struct {
+	PaginatedResponse
+	Drafts []PurchaseDraft `json:"drafts"`
+}
+
+// --- Invoice management types ---
+
+// SendInvoiceRequest is the request body for POST /invoices/send.
+type SendInvoiceRequest struct {
+	InvoiceId                  int64    `json:"invoiceId"`
+	Method                     []string `json:"method,omitempty"`
+	RecipientName              string   `json:"recipientName,omitempty"`
+	RecipientEmail             string   `json:"recipientEmail,omitempty"`
+	Message                    string   `json:"message,omitempty"`
+	IncludeDocumentAttachments bool     `json:"includeDocumentAttachments,omitempty"`
+}
+
+// InvoiceCounter represents the invoice counter value.
+type InvoiceCounter struct {
+	Counter int64 `json:"counter"`
+}
+
+// --- Bank types ---
+
+// BankAccountRequest is used to create a new bank account.
+type BankAccountRequest struct {
+	Name              string `json:"name"`
+	BankAccountNumber string `json:"bankAccountNumber"`
+	Type              string `json:"type,omitempty"`
+	Bic               string `json:"bic,omitempty"`
+	Iban              string `json:"iban,omitempty"`
+}
+
+// BankBalance represents a bank account balance at a given date.
+type BankBalance struct {
+	BankAccountId int64  `json:"bankAccountId"`
+	Balance       int64  `json:"balance"`
+	Date          string `json:"date,omitempty"`
+	AccountCode   string `json:"accountCode,omitempty"`
+}
+
+type BankBalancesResponse struct {
+	PaginatedResponse
+	BankBalances []BankBalance `json:"bankBalances"`
+}
+
+// --- Contact person types ---
+
+// ContactPerson represents a person associated with a contact.
+type ContactPerson struct {
+	ContactPersonId int64  `json:"contactPersonId"`
+	Name            string `json:"name"`
+	Email           string `json:"email,omitempty"`
+	PhoneNumber     string `json:"phoneNumber,omitempty"`
+}
+
+// ContactPersonRequest is used to create or update a contact person.
+type ContactPersonRequest struct {
+	Name        string `json:"name"`
+	Email       string `json:"email,omitempty"`
+	PhoneNumber string `json:"phoneNumber,omitempty"`
+}
+
+// --- Attachment type ---
+
+// Attachment represents an attachment on a resource.
+type Attachment struct {
+	AttachmentId int64  `json:"attachmentId"`
+	Filename     string `json:"filename,omitempty"`
+	Type         string `json:"type,omitempty"`
+	Date         string `json:"date,omitempty"`
+}
+
+// --- Group type ---
+
+// Group represents a contact group.
+type Group struct {
+	Name string `json:"name"`
+}
+
+// --- Product sales report types ---
+
+// ProductSalesReportRequest is the request body for POST /products/salesReport.
+type ProductSalesReportRequest struct {
+	From       string  `json:"from"`
+	To         string  `json:"to"`
+	ProductIds []int64 `json:"productIds,omitempty"`
+}
+
+// ProductSalesReportResult contains the result of a product sales report.
+type ProductSalesReportResult struct {
+	Lines []ProductSalesLineInfo `json:"lines,omitempty"`
+}
+
+// ProductSalesLineInfo is a single line in a product sales report.
+type ProductSalesLineInfo struct {
+	ProductId   int64  `json:"productId"`
+	ProductName string `json:"productName,omitempty"`
+	Count       int64  `json:"count"`
+	Net         int64  `json:"net"`
+	Vat         int64  `json:"vat"`
+	Gross       int64  `json:"gross"`
+}
+
+// --- User type ---
+
+// UserInfo represents the authenticated user.
+type UserInfo struct {
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}
