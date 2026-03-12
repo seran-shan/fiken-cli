@@ -29,6 +29,36 @@ const (
 
 	// Single entity endpoints
 	EndpointTransaction = "/companies/%s/transactions/%d"
+
+	// Contact endpoints
+	EndpointContact = "/companies/%s/contacts/%d"
+
+	// Product endpoints
+	EndpointProducts = "/companies/%s/products"
+	EndpointProduct  = "/companies/%s/products/%d"
+
+	// Invoice endpoints (single entity + drafts)
+	EndpointInvoice                 = "/companies/%s/invoices/%d"
+	EndpointInvoiceDrafts           = "/companies/%s/invoices/drafts"
+	EndpointInvoiceDraft            = "/companies/%s/invoices/drafts/%d"
+	EndpointInvoiceDraftAttachments = "/companies/%s/invoices/drafts/%d/attachments"
+	EndpointInvoiceDraftFinalize    = "/companies/%s/invoices/drafts/%d/createInvoice"
+
+	// Sale endpoints (single entity + delete/settle + payments + drafts)
+	EndpointSale                 = "/companies/%s/sales/%d"
+	EndpointSaleDelete           = "/companies/%s/sales/%d/delete"
+	EndpointSaleSettle           = "/companies/%s/sales/%d/settled"
+	EndpointSalePayments         = "/companies/%s/sales/%d/payments"
+	EndpointSalePayment          = "/companies/%s/sales/%d/payments/%d"
+	EndpointSaleDrafts           = "/companies/%s/sales/drafts"
+	EndpointSaleDraft            = "/companies/%s/sales/drafts/%d"
+	EndpointSaleDraftAttachments = "/companies/%s/sales/drafts/%d/attachments"
+	EndpointSaleDraftFinalize    = "/companies/%s/sales/drafts/%d/createSale"
+
+	// Purchase endpoints (single entity + payments)
+	EndpointPurchase         = "/companies/%s/purchases/%d"
+	EndpointPurchasePayments = "/companies/%s/purchases/%d/payments"
+	EndpointPurchasePayment  = "/companies/%s/purchases/%d/payments/%d"
 )
 
 // Pagination defaults
