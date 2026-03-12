@@ -182,6 +182,10 @@ var offersSendCmd = &cobra.Command{
 		recipientEmail, _ := cmd.Flags().GetString("recipient-email")
 		message, _ := cmd.Flags().GetString("message")
 		includeAttachments, _ := cmd.Flags().GetBool("include-document-attachments")
+		emailSendOption, _ := cmd.Flags().GetString("email-send-option")
+		mergeAttachments, _ := cmd.Flags().GetBool("merge-invoice-and-attachments")
+		orgNumber, _ := cmd.Flags().GetString("organization-number")
+		mobileNumber, _ := cmd.Flags().GetString("mobile-number")
 
 		methods := strings.Split(methodStr, ",")
 
@@ -201,6 +205,10 @@ var offersSendCmd = &cobra.Command{
 			RecipientEmail:             recipientEmail,
 			Message:                    message,
 			IncludeDocumentAttachments: includeAttachments,
+			EmailSendOption:            emailSendOption,
+			MergeInvoiceAndAttachments: mergeAttachments,
+			OrganizationNumber:         orgNumber,
+			MobileNumber:               mobileNumber,
 		}
 
 		if err := client.Post(fmt.Sprintf(api.EndpointOfferSend, slug), req, nil); err != nil {
@@ -222,6 +230,10 @@ func init() {
 	offersSendCmd.Flags().String("recipient-email", "", "Recipient email (optional)")
 	offersSendCmd.Flags().String("message", "", "Message to include (optional)")
 	offersSendCmd.Flags().Bool("include-document-attachments", false, "Include document attachments")
+	offersSendCmd.Flags().String("email-send-option", "", "Email send option: document_link, attachment, or auto (optional)")
+	offersSendCmd.Flags().Bool("merge-invoice-and-attachments", false, "Merge offer and attachments into one PDF when emailing (optional)")
+	offersSendCmd.Flags().String("organization-number", "", "Override recipient organization number (optional)")
+	offersSendCmd.Flags().String("mobile-number", "", "Mobile number for SMS delivery, include country code (optional)")
 
 	offersCmd.AddCommand(offersListCmd)
 	offersCmd.AddCommand(offersGetCmd)

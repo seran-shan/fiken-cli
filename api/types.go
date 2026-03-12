@@ -531,12 +531,16 @@ type OrderConfirmationCounter struct {
 
 // SendOfferRequest is the request body for POST /offers/send.
 type SendOfferRequest struct {
-	OfferId                    int64    `json:"offerId"`
-	Method                     []string `json:"method,omitempty"`
-	RecipientName              string   `json:"recipientName,omitempty"`
-	RecipientEmail             string   `json:"recipientEmail,omitempty"`
-	Message                    string   `json:"message,omitempty"`
-	IncludeDocumentAttachments bool     `json:"includeDocumentAttachments,omitempty"`
+	OfferId                      int64    `json:"offerId"`
+	Method                       []string `json:"method,omitempty"`
+	RecipientName                string   `json:"recipientName,omitempty"`
+	RecipientEmail               string   `json:"recipientEmail,omitempty"`
+	Message                      string   `json:"message,omitempty"`
+	IncludeDocumentAttachments   bool     `json:"includeDocumentAttachments,omitempty"`
+	EmailSendOption              string   `json:"emailSendOption,omitempty"`
+	MergeInvoiceAndAttachments   bool     `json:"mergeInvoiceAndAttachments,omitempty"`
+	OrganizationNumber           string   `json:"organizationNumber,omitempty"`
+	MobileNumber                 string   `json:"mobileNumber,omitempty"`
 }
 
 // --- Bank types ---
