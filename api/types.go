@@ -125,12 +125,13 @@ type OrderLine struct {
 // OrderLineRequest is used when creating purchases (write schema).
 // Distinct from OrderLine which is used for reading existing purchases.
 type OrderLineRequest struct {
-	Description string `json:"description"`
-	NetPrice    int64  `json:"netPrice"`
-	Vat         int64  `json:"vat,omitempty"`
-	Account     string `json:"account,omitempty"`
-	VatType     string `json:"vatType"`
-	ProjectId   int64  `json:"projectId,omitempty"`
+	Description        string `json:"description"`
+	NetPrice           int64  `json:"netPrice,omitempty"`
+	NetPriceInCurrency int64 `json:"netPriceInCurrency,omitempty"`
+	Vat                int64  `json:"vat,omitempty"`
+	Account            string `json:"account,omitempty"`
+	VatType            string `json:"vatType"`
+	ProjectId          int64  `json:"projectId,omitempty"`
 }
 
 type PurchasesResponse struct {
@@ -149,6 +150,7 @@ type PurchaseRequest struct {
 	Currency       string             `json:"currency"`
 	PaymentAccount string             `json:"paymentAccount,omitempty"`
 	PaymentDate    string             `json:"paymentDate,omitempty"`
+	PaymentAmountInNok int64          `json:"paymentAmountInNok,omitempty"`
 	Identifier     string             `json:"identifier,omitempty"`
 	ProjectId      int64              `json:"projectId,omitempty"`
 }
@@ -456,10 +458,11 @@ type PaymentsResponse struct {
 
 // PaymentRequest is used to create a payment.
 type PaymentRequest struct {
-	Date     string `json:"date"`
-	Account  string `json:"account"`
-	Amount   int64  `json:"amount"`
-	Currency string `json:"currency,omitempty"`
+	Date               string `json:"date"`
+	Account            string `json:"account"`
+	Amount             int64  `json:"amount"`
+	PaymentAmountInNok int64  `json:"paymentAmountInNok,omitempty"`
+	Currency           string `json:"currency,omitempty"`
 }
 
 // --- Purchase draft types ---
