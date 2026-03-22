@@ -80,6 +80,7 @@ var purchasesPaymentsCreateCmd = &cobra.Command{
 		account, _ := cmd.Flags().GetString("account")
 		amountStr, _ := cmd.Flags().GetString("amount")
 		currency, _ := cmd.Flags().GetString("currency")
+		paymentAmountNokStr, _ := cmd.Flags().GetString("payment-amount-nok")
 
 		var missing []string
 		if date == "" {
@@ -100,6 +101,14 @@ var purchasesPaymentsCreateCmd = &cobra.Command{
 			return err
 		}
 
+		var paymentAmountInNok int64
+		if paymentAmountNokStr != "" {
+			paymentAmountInNok, err = ParseAmountToCents(paymentAmountNokStr)
+			if err != nil {
+				return err
+			}
+		}
+
 		client, err := getClient()
 		if err != nil {
 			return err
@@ -111,10 +120,11 @@ var purchasesPaymentsCreateCmd = &cobra.Command{
 		}
 
 		req := api.PaymentRequest{
-			Date:     date,
-			Account:  account,
-			Amount:   amountCents,
-			Currency: currency,
+			Date:               date,
+			Account:            account,
+			Amount:             amountCents,
+			PaymentAmountInNok: paymentAmountInNok,
+			Currency:           currency,
 		}
 
 		locationURL, err := client.PostCreate(fmt.Sprintf(api.EndpointPurchasePayments, slug, purchaseID), req)
@@ -184,6 +194,7 @@ func init() {
 	purchasesPaymentsCreateCmd.Flags().String("account", "", "Payment account code (required)")
 	purchasesPaymentsCreateCmd.Flags().String("amount", "", "Amount in decimal format e.g. '1000.00' (required)")
 	purchasesPaymentsCreateCmd.Flags().String("currency", "NOK", "Currency code")
+	purchasesPaymentsCreateCmd.Flags().String("payment-amount-nok", "", "Settlement amount in NOK for foreign currency payments paid from a NOK account (optional)")
 
 	purchasesPaymentsCmd.AddCommand(purchasesPaymentsListCmd)
 	purchasesPaymentsCmd.AddCommand(purchasesPaymentsCreateCmd)

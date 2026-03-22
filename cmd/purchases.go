@@ -108,6 +108,7 @@ var purchasesCreateCmd = &cobra.Command{
 		supplierID, _ := cmd.Flags().GetInt64("supplier-id")
 		paymentAccount, _ := cmd.Flags().GetString("payment-account")
 		paymentDate, _ := cmd.Flags().GetString("payment-date")
+		paymentAmountNokStr, _ := cmd.Flags().GetString("payment-amount-nok")
 		filePath, _ := cmd.Flags().GetString("file")
 
 		var missing []string
@@ -148,6 +149,14 @@ var purchasesCreateCmd = &cobra.Command{
 			return err
 		}
 
+		var paymentAmountInNok int64
+		if paymentAmountNokStr != "" {
+			paymentAmountInNok, err = ParseAmountToCents(paymentAmountNokStr)
+			if err != nil {
+				return err
+			}
+		}
+
 		client, err := getClient()
 		if err != nil {
 			return err
@@ -158,23 +167,28 @@ var purchasesCreateCmd = &cobra.Command{
 			return err
 		}
 
+		line := api.OrderLineRequest{
+			Description: description,
+			Account:     account,
+			VatType:     vatType,
+		}
+		if currency == "NOK" {
+			line.NetPrice = amountCents
+		} else {
+			line.NetPriceInCurrency = amountCents
+		}
+
 		purchaseReq := api.PurchaseRequest{
-			Date:           date,
-			Kind:           kind,
-			Paid:           paid,
-			Currency:       currency,
-			Identifier:     identifier,
-			SupplierId:     supplierID,
-			PaymentAccount: paymentAccount,
-			PaymentDate:    paymentDate,
-			Lines: []api.OrderLineRequest{
-				{
-					Description: description,
-					NetPrice:    amountCents,
-					Account:     account,
-					VatType:     vatType,
-				},
-			},
+			Date:               date,
+			Kind:               kind,
+			Paid:               paid,
+			Currency:           currency,
+			Identifier:         identifier,
+			SupplierId:         supplierID,
+			PaymentAccount:     paymentAccount,
+			PaymentDate:        paymentDate,
+			PaymentAmountInNok: paymentAmountInNok,
+			Lines:              []api.OrderLineRequest{line},
 		}
 
 		locationURL, err := client.PostCreate(fmt.Sprintf(api.EndpointPurchases, slug), purchaseReq)
@@ -422,5 +436,6 @@ func init() {
 	purchasesCreateCmd.Flags().Int64("supplier-id", 0, "Supplier contact ID (optional)")
 	purchasesCreateCmd.Flags().String("payment-account", "", "Payment account code (optional)")
 	purchasesCreateCmd.Flags().String("payment-date", "", "Payment date YYYY-MM-DD (optional)")
+	purchasesCreateCmd.Flags().String("payment-amount-nok", "", "Settlement amount in NOK for foreign currency payments paid from a NOK account (optional)")
 	purchasesCreateCmd.Flags().String("file", "", "Path to receipt file to attach after creation (optional)")
 }
